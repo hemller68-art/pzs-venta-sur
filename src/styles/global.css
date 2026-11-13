@@ -287,3 +287,33 @@ main:focus{outline:none}
 /* Reels: misma altura en escritorio, ancho según el formato del video */
 @media(min-width:760px){.reels{align-items:flex-start}.reels .media,.reels .media.dual,.reels .media:not(.dual){flex:0 0 auto;width:auto}.reels .media .v,.reels .media .h{height:380px;width:auto}.reels .media .v{aspect-ratio:9/16}.reels .media .h{aspect-ratio:16/9}}
 footer{padding-bottom:6.5rem}
+/* Celular: tamaños más compactos para una mejor primera impresión */
+@media(max-width:520px){
+  body{font-size:15px;padding-bottom:74px}
+  h1{font-size:clamp(1.6rem,7.4vw,2rem)}
+  .hero.vid h1{font-size:clamp(1.6rem,7.4vw,2rem)}
+  h2{font-size:clamp(1.3rem,5.6vw,1.6rem)}
+  .nav{min-height:56px;gap:.5rem}
+  .logo img{height:28px}
+  .logo{gap:.45rem;min-width:0}
+  .logo b{font-size:.9rem;white-space:nowrap}
+  .logo small{display:none}
+  .music{font-size:0;padding:0;width:38px;min-height:38px;display:inline-flex;align-items:center;justify-content:center}
+  .music::before{content:"\266A";font-size:1.1rem;line-height:1}
+  .burger{width:40px;height:40px}
+  .menu{inset:56px 0 0 0}
+  .btn{font-size:.9rem;min-height:44px;padding:.6rem 1.1rem}
+  .hero.vid .sub{font-size:.95rem}
+  .hero.vid .acts{gap:.5rem}
+  .hero.vid .acts .btn{flex:1 1 auto}
+  .stage-in{padding-bottom:8rem}
+  .wa{font-size:.88rem;padding:.55rem .85rem;min-height:40px;bottom:80px;right:.7rem}
+  footer{font-size:.9rem}
+  .eyebrow{font-size:.7rem}
+}
+/* Celular/tablet: más contraste del texto sobre la imagen de portada */
+@media(max-width:899px){
+  .frame::after{background:linear-gradient(180deg,rgba(12,3,36,.30) 0%,rgba(12,3,36,.62) 38%,rgba(12,3,36,.84) 62%,rgba(12,3,36,.94) 100%),var(--velo-v)}
+  .hero.vid .eyebrow,.hero.vid h1,.hero.vid .sub{text-shadow:0 2px 14px rgba(8,2,30,.9),0 1px 3px rgba(8,2,30,.8)}
+  .hero.vid .eyebrow{color:#fff}
+}
