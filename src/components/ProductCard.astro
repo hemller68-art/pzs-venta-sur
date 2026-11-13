@@ -1,0 +1,23 @@
+---
+import type { Producto } from '../data/types';
+import { ventaMin } from '../lib/escala';
+interface Props { p: Producto; g?: { titulo: string; foto_url: string; vars: Producto[]; presentaciones: string[] } }
+const { p, g } = Astro.props;
+const titulo = (g ? g.titulo : p.nombre) + (p.consultar ? ' (consultar disponibilidad)' : '');
+const foto = g ? g.foto_url : p.foto_url;
+const multi = !!g && g.vars.length > 1;
+const buscar = multi ? g!.vars.map((v) => `${v.nombre} ${(v.codigos || []).join(' ')}`).join(' ') : p.nombre;
+const emp = p.empaque_nombre || 'empaque';
+---
+<article class="card glass" data-slug={p.slug} data-nombre={buscar} data-uemp={p.unidades_empaque} data-foto={foto}>
+  <a class="ph" href={`/producto/${p.slug}`} aria-label={`Ver ${titulo}`}>
+    {foto ? <img src={foto} alt={titulo} loading="lazy" width="400" height="300" /> : <span class="nofoto">{p.nombre}</span>}
+  </a>
+  <div class="bd">
+    <div>{p.campana && <span class="tag">Campaña</span>}</div>
+    <h3><a href={`/producto/${p.slug}`}>{titulo}</a></h3>
+    <p class="meta">{[p.medidas, p.litros, p.colores].filter(Boolean).join(' · ')}</p>
+    {multi && g!.presentaciones.length > 0 ? <p class="meta">Presentaciones: {g!.presentaciones.join(' · ')}</p> : <p class="meta">{ventaMin(p.unidades_empaque, p.bulto_emp, emp)}</p>}
+    <div class="row"><a class="btn btn-gold btn-s" href={`/cotizar?p=${p.slug}`}>Cotizar este producto</a></div>
+  </div>
+</article>

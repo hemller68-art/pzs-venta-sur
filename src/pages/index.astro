@@ -1,0 +1,179 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import Icon from '../components/Icon.astro';
+import { adaptarMedio } from '../data/video';
+import { agrupar } from '../data/grupos';
+import { getNegocio, modoVigente, getProductos, getMedios, getSegmentos, getCategorias } from '../data/content';
+const n = await getNegocio();
+const modo = modoVigente(n);
+const [productos, medios, segmentos, cats] = await Promise.all([getProductos(), getMedios(), getSegmentos(), getCategorias()]);
+// Inicio: línea de campaña = cestos, tachos, coolers y línea kids (hasta 6 cestos y 3 modelos de las demás, una tarjeta por modelo).
+const catSlug = (id: unknown) => cats.find((c) => c.id === id)?.slug || '';
+const esKids = (nombre: string) => /\b(ni[ñn]o|ni[ñn]a|kids|infantil|cocoliso|manuelito)\b/i.test(nombre);
+const lineas: Array<(p: (typeof productos)[number]) => boolean> = [
+  (p) => !esKids(p.nombre) && catSlug(p.categoria_id) === 'cestos',
+  (p) => !esKids(p.nombre) && /^tacho\b/i.test(p.nombre),
+  (p) => !esKids(p.nombre) && catSlug(p.categoria_id) === 'coolers',
+  (p) => esKids(p.nombre),
+];
+const cupos = [6, 3, 3, 3];
+const porLinea = lineas.map((f, i) => agrupar(productos.filter((p) => p.foto_url && f(p))).slice(0, cupos[i]));
+const campanaLista = porLinea.flat();
+const lista = campanaLista.length ? campanaLista : agrupar(productos.filter((p) => p.foto_url)).slice(0, 8);
+const portada = medios['portada'];
+const esVideo = (u?: string) => !!u && /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(u);
+const himg = [portada?.horizontal_url, portada?.vertical_url].find(esVideo) || portada?.horizontal_url || portada?.vertical_url;
+const reels = Array.from({ length: 12 }, (_, i) => medios[`reel_${String(i + 1).padStart(2, '0')}`]).filter(Boolean);
+const fotos = (productos.filter((p) => p.campana && p.foto_url && !p.slug.includes('ratan') && !['canasta-yute-15','canasta-yute-25'].includes(p.slug)).length ? productos.filter((p) => p.campana && p.foto_url && !p.slug.includes('ratan') && !['canasta-yute-15','canasta-yute-25'].includes(p.slug)) : productos.filter((p) => p.foto_url)).slice(0, 3);
+const titulo = modo === 'campana' ? n.campana_titulo : n.normal_titulo;
+// Etiqueta pequeña sobre el título: editable en Panel > Negocio (si está vacía, usa el texto de siempre).
+const etiquetaHero = (modo === 'campana' ? (n as any).campana_etiqueta || 'Campaña navideña' : (n as any).normal_etiqueta || n.nombre) as string;
+// Portada editable (Panel > Medios > portada): video o imagen; si no hay nada, queda el video de siempre.
+// Interruptor: false = se usa siempre el video de /hero-video (como antes). Cambiar a true para usar lo subido en Panel > Medios > portada.
+const USAR_PORTADA_DEL_PANEL = false;
+const pVideoD = USAR_PORTADA_DEL_PANEL && esVideo(portada?.horizontal_url) ? portada!.horizontal_url : '';
+const pVideoM = USAR_PORTADA_DEL_PANEL && esVideo(portada?.vertical_url) ? portada!.vertical_url : '';
+const pImg = USAR_PORTADA_DEL_PANEL ? [portada?.horizontal_url, portada?.vertical_url].find((u) => u && !esVideo(u)) || '' : '';
+const texto = modo === 'campana' ? n.campana_texto : n.normal_texto;
+---
+<Base title={`${n.nombre} | Productos de limpieza y plásticos para tu negocio`} description={texto}>
+  <section class="hero vid" id="herovid">
+    <div class="stage">
+      <div class="hero-bg"></div>
+      <div class="frame" aria-hidden="true">
+        <video id="hv" muted loop playsinline autoplay preload="metadata" poster={pImg || '/hero-video/d.webp'} data-vd={pVideoD || undefined} data-vm={pVideoM || undefined} data-img={pImg || undefined}></video>
+      </div>
+        <button type="button" id="vpausa" class="vpausa" aria-pressed="false" aria-label="Pausar video de portada">❚❚ Pausar video</button>
+      <div class="wrap stage-in">
+        <div class="copy">
+          <span class="eyebrow">{etiquetaHero}</span>
+          <h1>{titulo}</h1>
+          <p class="sub">{texto}</p>
+          <div class="acts">
+            <a class="btn btn-gold sheen" href="/catalogo">Ver catálogo</a>
+            <a class="btn btn-g" href="/cotizar">Cotiza tu pedido</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="aviso">{n.aviso_minimo}</p>
+      <h2 style="margin-top:2rem">{modo === 'campana' ? 'Productos de la campaña' : 'Productos destacados'}</h2>
+      <p class="mut">Elige un producto y cotízalo con tu RUC o DNI.</p>
+      {lista.length ? <div class="grid">{lista.map((g) => <ProductCard p={g.principal} g={g} />)}</div> : <p class="mut vacio">Estamos cargando el catálogo. Escríbenos por WhatsApp y te atendemos.</p>}
+      <p style="margin-top:1.4rem"><a class="btn btn-g" href="/catalogo">Ver todo el catálogo</a></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Cómo comprar</h2>
+      <div class="steps">
+        <div class="glass rv"><b>1. Ingresa y elige</b><span class="mut">Escribe tu RUC o DNI, busca el producto y marca colores y cantidades.</span></div>
+        <div class="glass rv"><b>2. Envíala por WhatsApp</b><span class="mut">Completa tus datos y se abre WhatsApp con tu lista.</span></div>
+        <div class="glass rv"><b>3. Recibe tu cotización</b><span class="mut">Te respondemos con precios y forma de pago.</span></div>
+      </div>
+    </div>
+  </section>
+
+  {reels.length > 0 && (
+    <section>
+      <div class="wrap">
+        <h2>Míralo en acción</h2>
+        <div class="reels-wrap"><button class="rnav prev" type="button" aria-label="Anterior" hidden>‹</button><div class="reels" id="reels" tabindex="0">
+          {reels.map((m) => (
+            <div class={`media ${m.vertical_url && m.horizontal_url ? 'dual' : ''}`}>
+              {[['v', m.vertical_url], ['h', m.horizontal_url]].filter(([, u]) => u).map(([c, u]) => {
+                const a = adaptarMedio(u as string);
+                return (
+                  <div class={c}>
+                    {a.tipo === 'video' && <video src={a.src} controls playsinline preload="metadata" data-lazy></video>}
+                    {a.tipo === 'iframe' && <iframe src={a.src} loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title={m.alt || m.titulo || 'Video'}></iframe>}
+                    {a.tipo === 'img' && <img src={a.src} alt={m.alt || m.titulo} loading="lazy" />}
+                    {a.tipo === 'enlace' && <a class="btn btn-g" href={a.src} target="_blank" rel="noopener">Ver video</a>}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div><button class="rnav next" type="button" aria-label="Siguiente" hidden>›</button></div>
+        <p class="mut" id="rcount" style="text-align:center;margin-top:.6rem;font-size:.85rem"></p>
+      </div>
+    </section>
+  )}
+
+  {segmentos.length > 0 && (
+    <section>
+      <div class="wrap">
+        <h2>Para todos los negocios</h2>
+        <div class="segs">{segmentos.map((s) => <a class="glass rv" href={`/para/${s.slug}`}><b>{s.titulo}</b><span class="mut">{s.texto}</span></a>)}</div>
+      </div>
+    </section>
+  )}
+
+  <section>
+    <div class="wrap" style="text-align:center">
+      <h2>¿Dudas? Escríbenos</h2>
+      <p style="margin-top:1rem"><a class="btn btn-wa" href={`https://wa.me/${n.whatsapp}`} target="_blank" rel="noopener"><Icon name="wa" />Hablar por WhatsApp</a></p>
+    </div>
+  </section>
+  <script>
+    // Hero con video: se reproduce solo, en bucle y sin sonido. Versión vertical en celular.
+    (() => {
+      const v = document.getElementById('hv') as HTMLVideoElement | null;
+      if (!v) return;
+      const movil = window.matchMedia('(max-width: 899px)').matches;
+      const ds = v.dataset;
+      const propio = (movil ? ds.vm || ds.vd : ds.vd || ds.vm) || '';
+      if (propio) {
+        v.src = propio; // video subido desde el panel
+      } else if (ds.img) {
+        // Solo imagen subida desde el panel: se muestra fija, sin video ni botón de pausa.
+        v.removeAttribute('autoplay'); v.preload = 'none'; document.getElementById('vpausa')?.remove();
+        return;
+      } else {
+        if (movil) v.poster = '/hero-video/m.webp';
+        const k = movil ? 'm' : 'd';
+        v.src = v.canPlayType('video/mp4; codecs="avc1.42E01E"') ? `/hero-video/${k}.mp4` : `/hero-video/${k}.webm`;
+      }
+      v.muted = true;
+      // El visitante puede pausar el video; si pidió "reducir movimiento", no arranca solo.
+      let pausado = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const bp = document.getElementById('vpausa') as HTMLButtonElement | null;
+      const etiqueta = () => { if (!bp) return; bp.textContent = pausado ? '▶ Reproducir video' : '❚❚ Pausar video'; bp.setAttribute('aria-pressed', String(pausado)); bp.setAttribute('aria-label', pausado ? 'Reproducir video de portada' : 'Pausar video de portada'); };
+      const play = () => { if (!pausado) v.play().catch(() => {}); };
+      if (pausado) v.preload = 'none';
+      etiqueta(); play();
+      bp?.addEventListener('click', () => { pausado = !pausado; if (pausado) v.pause(); else v.play().catch(() => {}); etiqueta(); });
+      ['click', 'touchstart', 'scroll'].forEach((e) => window.addEventListener(e, play, { once: true, passive: true }));
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) play(); });
+    })();
+  </script>
+  <script>
+    // Video de portada: arranca solo (silenciado) y se reintenta si el navegador lo detiene
+    
+    // Un solo video a la vez, y se pausan al salir de pantalla
+    document.addEventListener('play', (e) => { document.querySelectorAll('video:not(#herovid)').forEach((v) => { if (v !== e.target) v.pause(); }); }, true);
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) (e.target as HTMLVideoElement).pause(); }), { threshold: 0.25 });
+      document.querySelectorAll('video[data-lazy]').forEach((v) => io.observe(v));
+    }
+    const r = document.getElementById('reels');
+    if (r) {
+      const wrap = r.parentElement!, prev = wrap.querySelector<HTMLButtonElement>('.prev')!, next = wrap.querySelector<HTMLButtonElement>('.next')!, c = document.getElementById('rcount')!;
+      const n = r.children.length;
+      const upd = () => {
+        prev.hidden = r.scrollLeft < 8; next.hidden = r.scrollLeft + r.clientWidth >= r.scrollWidth - 8;
+        const w = (r.children[0] as HTMLElement).offsetWidth + 16, vis = Math.max(1, Math.round(r.clientWidth / w)), first = Math.round(r.scrollLeft / w) + 1;
+        c.textContent = n > vis ? `${first}–${Math.min(n, first + vis - 1)} de ${n}` : '';
+      };
+      const go = (d: number) => r.scrollBy({ left: d * r.clientWidth * 0.9, behavior: 'smooth' });
+      prev.addEventListener('click', () => go(-1)); next.addEventListener('click', () => go(1));
+      r.addEventListener('scroll', () => requestAnimationFrame(upd)); window.addEventListener('resize', upd); upd();
+    }
+  </script>
+</Base>

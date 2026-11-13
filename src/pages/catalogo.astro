@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { agrupar } from '../data/grupos';
+import { getNegocio, getProductos, getCategorias } from '../data/content';
+const n = await getNegocio();
+const [productos, cats] = await Promise.all([getProductos(), getCategorias()]);
+const sel = Astro.url.searchParams.get('c') || '';
+const cat = cats.find((c) => c.slug === sel);
+const visibles = agrupar(cat ? productos.filter((p) => p.categoria_id === cat.id) : productos);
+---
+<Base title={`Catálogo | ${n.nombre}`} description="Catálogo de productos de limpieza, hogar y plásticos. Elige tus productos y pide tu cotización por WhatsApp.">
+  <section>
+    <div class="wrap">
+      <h1 style="font-size:clamp(2rem,6vw,3.2rem)">Catálogo</h1>
+      <p class="mut" style="margin-top:.6rem">Elige un producto y pulsa «Cotizar este producto». {n.aviso_minimo}</p>
+      <div class="chips">
+        <a class="chip" href="/catalogo" aria-current={!cat}>Todo</a>
+        {cats.map((c) => <a class="chip" href={`/catalogo?c=${c.slug}`} aria-current={cat?.id === c.id}>{c.nombre}</a>)}
+      </div>
+      <div style="margin-top:1rem"><label class="sr" for="q">Buscar</label><input id="q" class="buscar" type="search" placeholder="Buscar producto…" autocomplete="off" /></div>
+      {visibles.length ? <div class="grid" id="grid">{visibles.map((g) => <ProductCard p={g.principal} g={g} />)}</div> : <p class="mut vacio">No hay productos en esta categoría.</p>}
+      <p class="mut vacio" id="nada" hidden>No encontramos ese producto. Escríbenos por WhatsApp y lo buscamos.</p>
+    </div>
+  </section>
+  <script>
+    const q = document.getElementById('q') as HTMLInputElement;
+    const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    q?.addEventListener('input', () => {
+      const t = norm(q.value.trim());
+      let n = 0;
+      document.querySelectorAll<HTMLElement>('#grid [data-slug]').forEach((c) => {
+        const ok = !t || norm(c.dataset.nombre || '').includes(t);
+        c.hidden = !ok; if (ok) n++;
+      });
+      (document.getElementById('nada') as HTMLElement).hidden = n > 0;
+    });
+  </script>
+</Base>

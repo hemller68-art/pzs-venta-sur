@@ -1,0 +1,121 @@
+---
+import '@fontsource-variable/outfit';
+import '@fontsource/titillium-web/600.css';
+import '@fontsource/titillium-web/700.css';
+import '../styles/global.css';
+import Icon from '../components/Icon.astro';
+import { getNegocio, modoVigente, getSegmentos } from '../data/content';
+interface Props { title: string; description: string; image?: string; jsonLd?: object | object[]; noindex?: boolean }
+const negocio = await getNegocio();
+const modo = modoVigente(negocio);
+const segmentos = await getSegmentos();
+const { title, description, image = '/icon-512.png', jsonLd, noindex } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const og = image.startsWith('http') ? image : new URL(image, Astro.site).href;
+const path = Astro.url.pathname;
+const links: [string, string][] = [['/', 'Inicio'], ['/catalogo', 'Catálogo'], ['/cotizar', 'Cotiza tu pedido'], ['/nosotros', 'Nosotros'], ['/contacto', 'Contacto']];
+const org = { '@context': 'https://schema.org', '@type': ['Organization', 'LocalBusiness'], '@id': new URL('/#org', Astro.site).href, name: negocio.nombre, legalName: negocio.legal_razon || undefined, taxID: negocio.legal_ruc || undefined, description: 'Canal de venta de PROLIMSO para la zona sur del Perú: productos plásticos de limpieza y hogar al por mayor para ferreterías, distribuidores y negocios.', logo: new URL('/icon-512.png', Astro.site).href, image: new URL('/icon-512.png', Astro.site).href, url: Astro.site?.href, telephone: negocio.telefono, email: negocio.email || negocio.legal_email || undefined, address: negocio.direccion ? { '@type': 'PostalAddress', streetAddress: negocio.direccion, addressCountry: 'PE' } : undefined, openingHours: negocio.horario || undefined, areaServed: [{ '@type': 'AdministrativeArea', name: 'Arequipa' }, { '@type': 'AdministrativeArea', name: 'Cusco' }, { '@type': 'AdministrativeArea', name: 'Puno' }], parentOrganization: negocio.prov_razon ? { '@type': 'Organization', name: negocio.prov_razon } : undefined };
+const site = { '@context': 'https://schema.org', '@type': 'WebSite', name: negocio.nombre, url: Astro.site?.href, inLanguage: 'es-PE', publisher: { '@id': new URL('/#org', Astro.site).href } };
+const ld = [org, ...(path === '/' ? [site] : []), ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [])];
+const okUrl = (u: string) => (/^https:\/\/[^\s"'<>]+$/.test(u || '') ? u : '');
+const redes: [string, string][] = ([['Facebook', okUrl(negocio.facebook_url)], ['Instagram', okUrl(negocio.instagram_url)], ['TikTok', okUrl(negocio.tiktok_url)]] as [string, string][]).filter(([, u]) => u);
+const pxMeta = /^\d{8,20}$/.test(negocio.pixel_meta || '') ? negocio.pixel_meta : '';
+const pxTik = /^[A-Za-z0-9]{8,30}$/.test(negocio.pixel_tiktok || '') ? negocio.pixel_tiktok : '';
+const ga4 = /^G-[A-Z0-9]{4,20}$/.test(negocio.ga4 || '') ? negocio.ga4 : '';
+const sameAs = redes.map(([, u]) => u);
+if (sameAs.length) (org as any).sameAs = sameAs;
+const musica = modo === 'campana' && negocio.musica_activa && negocio.musica_url ? negocio.musica_url : '';
+---
+<!doctype html>
+<html lang="es-PE">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{title}</title>
+  <style is:global>@media(min-width:760px){footer .cols{grid-template-columns:1.4fr 1fr 1fr 1fr 1fr}}</style>
+  <meta name="description" content={description} />
+  <meta name="theme-color" content={modo === 'campana' ? '#1a0b3d' : '#0b1a4a'} />
+  <link rel="canonical" href={canonical} />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  {noindex && <meta name="robots" content="noindex" />}
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:image" content={og} />
+  <meta property="og:site_name" content={negocio.nombre} />
+  <meta property="og:locale" content="es_PE" />
+  <meta name="twitter:card" content="summary_large_image" />
+  {ld.map((o) => <script type="application/ld+json" set:html={JSON.stringify(o).replace(/</g, '\\u003c')} />)}
+  <script is:inline>document.documentElement.classList.add('js')</script>
+  {(pxMeta || pxTik || ga4) && <script is:inline define:vars={{ pxMeta, pxTik, ga4 }}>
+    if (pxMeta) { !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js'); fbq('init', pxMeta); fbq('track', 'PageView'); }
+    if (pxTik) { !function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.load=function(e){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]={};var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};ttq.load(pxTik);ttq.page()}(window,document,'ttq'); }
+    if (ga4) { var gs = document.createElement('script'); gs.async = true; gs.src = 'https://www.googletagmanager.com/gtag/js?id=' + ga4; document.head.appendChild(gs); window.dataLayer = window.dataLayer || []; window.gtag = function(){ window.dataLayer.push(arguments); }; gtag('js', new Date()); gtag('config', ga4); }
+    document.addEventListener('click', function (e) { var a = e.target && e.target.closest && e.target.closest('a[href^="https://wa.me"]'); if (!a) return; try { if (window.fbq) fbq('track', 'Contact'); if (window.ttq) ttq.track('Contact'); if (window.gtag) gtag('event', 'contact', { method: 'whatsapp' }); } catch (_) {} });
+  </script>}
+</head>
+<body data-modo={modo} data-wa={negocio.whatsapp} data-musica={musica} data-vol={negocio.musica_volumen}>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+  <header class="top">
+    <div class="wrap nav">
+      <a href="/" class="logo" aria-label={negocio.nombre}><img src="/img/logo.png" alt="" width="97" height="36" /><span><b>ZONA SUR</b><small>{negocio.eslogan}</small></span></a>
+      <nav class="menu" id="menu" aria-label="Principal">
+        {links.map(([h, l]) => <a class="l" href={h} aria-current={(h === '/' ? path === '/' : path.startsWith(h)) ? 'page' : undefined}>{l}</a>)}
+      </nav>
+      <div class="tools">
+        {musica && <button class="music" id="music" aria-pressed="false" type="button">♪ Activar música</button>}
+        <button class="burger" aria-label="Abrir menú" aria-expanded="false" id="burger" type="button"><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+  <main id="contenido" tabindex="-1"><slot /></main>
+  <footer>
+    <div class="wrap">
+      <div class="cols">
+        <div><div class="logo"><img src="/img/logo.png" alt="PROLIMSO" width="97" height="36" /><span><b>ZONA SUR</b></span></div>
+          <p class="mut" style="margin-top:.8rem;max-width:36ch">Fabricante peruano de productos plásticos de limpieza para el hogar, la industria y más. Atención a negocios de la zona sur del Perú.</p></div>
+        <div><h3>Explora</h3><ul>{links.map(([h, l]) => <li><a href={h}>{l}</a></li>)}<li><a href="/como-pagar">Cómo pagar</a></li></ul></div>
+        <div><h3>Para todos los negocios</h3><ul>{segmentos.map((s) => <li><a href={`/para/${s.slug}`}>{s.titulo}</a></li>)}</ul></div>
+        <div><h3>Avisos legales</h3><ul><li><a href="/libro-de-reclamaciones">Libro de Reclamaciones</a></li><li><a href="/terminos">Términos del servicio</a></li><li><a href="/envios-y-reembolsos">Envío y reembolso</a></li><li><a href="/privacidad">Política de privacidad</a></li></ul></div>
+        <div><h3>Contacto</h3><ul><li>{negocio.telefono}</li>{(negocio.email || negocio.legal_email) && <li>{negocio.email || negocio.legal_email}</li>}{negocio.direccion && <li>{negocio.direccion}</li>}{negocio.horario && <li>{negocio.horario}</li>}</ul>{redes.length > 0 && <><h3 style="margin-top:1rem">Síguenos</h3><ul>{redes.map(([n, u]) => <li><a href={u} target="_blank" rel="noopener noreferrer me">{n}</a></li>)}</ul></>}</div>
+      </div>
+      <div class="credit"><a href="https://ccomer.tech" target="_blank" rel="noopener" aria-label="Círculo Comercial y Mercadeo"><img src="/img/ccm-logo.png" alt="CC&M" width="72" height="72" loading="lazy" /></a><span>Sitio web desarrollado por <strong>Círculo Comercial y Mercadeo EIRL (CC&amp;<b style="color:var(--gold)">M</b>)</strong></span></div>
+      <div class="legal">© {new Date().getFullYear()} {negocio.legal_razon || negocio.nombre}{negocio.legal_ruc && <> · RUC {negocio.legal_ruc}</>}{negocio.prov_razon && <> · Canal de venta de {negocio.prov_razon}</>}. Todos los derechos reservados. · <a href="/libro-de-reclamaciones">Libro de Reclamaciones</a> · <a href="/privacidad">Política de privacidad</a> · <a href="/admin" rel="nofollow">Administrador</a></div>
+    </div>
+  </footer>
+  <a class="wa" href={`https://wa.me/${negocio.whatsapp}?text=${encodeURIComponent('Hola, quisiera información sobre sus productos.')}`} target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><Icon name="wa" />WhatsApp</a>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    const $ = (s: string) => document.querySelector(s);
+    const toast = (t: string) => { const e = $('#toast')!; e.textContent = t; e.classList.add('on'); clearTimeout((window as any)._t); (window as any)._t = setTimeout(() => e.classList.remove('on'), 3200); };
+    (window as any).pzsToast = toast;
+
+    // guarda UTM de la primera visita para atribuir el lead
+    try { const q = new URLSearchParams(location.search); ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ref'].forEach((k) => { const v = q.get(k); if (v) sessionStorage.setItem(k, v); }); } catch {}
+
+    // menú móvil y aparición suave
+    const b = $('#burger') as HTMLElement, m = $('#menu') as HTMLElement;
+    b.addEventListener('click', () => { const o = m.classList.toggle('open'); b.setAttribute('aria-expanded', String(o)); });
+    const els = document.querySelectorAll('.rv');
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 });
+      els.forEach((e) => io.observe(e));
+    } else els.forEach((e) => e.classList.add('in'));
+
+    // música: nunca empieza sola (los navegadores y las apps de Facebook y TikTok lo bloquean)
+    const mb = $('#music') as HTMLButtonElement | null;
+    const url = document.body.dataset.musica;
+    if (mb && url) {
+      let audio: HTMLAudioElement | null = null;
+      mb.addEventListener('click', async () => {
+        if (!audio) { audio = new Audio(url); audio.loop = true; audio.volume = Math.min(1, Math.max(0, Number(document.body.dataset.vol) || .4)); }
+        const on = mb.getAttribute('aria-pressed') !== 'true';
+        try { if (on) await audio.play(); else audio.pause(); mb.setAttribute('aria-pressed', String(on)); mb.textContent = on ? '♪ Música activada' : '♪ Activar música'; }
+        catch { toast('Tu navegador no pudo reproducir la música.'); }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import { getNegocio } from '../data/content';
+const n = await getNegocio();
+const op = `${n.legal_razon}${n.legal_ruc ? ` (RUC ${n.legal_ruc})` : ''}`;
+---
+<Base title={`Términos del servicio | ${n.nombre}`} description="Condiciones para cotizar y pedir productos PROLIMSO en la zona sur del Perú.">
+  <section><div class="wrap" style="max-width:760px">
+    <h1 style="font-size:clamp(2rem,6vw,3rem)">Términos del servicio</h1>
+    <p class="mut" style="margin-top:.4rem">Última actualización: noviembre de 2026</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">1. Quiénes somos</h2>
+    <p style="margin-top:.5rem">Este sitio web es operado por {op}{n.legal_direccion && `, con domicilio en ${n.legal_direccion}`}, que actúa como representante comercial de {n.prov_razon}{n.prov_ruc && ` (RUC ${n.prov_ruc})`} para la zona sur del Perú. {n.prov_razon} es el fabricante y proveedor de los productos, y quien emite los comprobantes de pago y recibe los depósitos.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">2. Cotizaciones y pedidos</h2>
+    <p style="margin-top:.5rem">La lista que envías es una solicitud de cotización, no una compra. El pedido se concreta cuando recibes la cotización por WhatsApp, la confirmas y realizas el pago. Los precios y la disponibilidad pueden cambiar sin previo aviso y se confirman en la cotización.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">3. Montos mínimos</h2>
+    <p style="margin-top:.5rem">{n.aviso_minimo}</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">4. Pagos</h2>
+    <p style="margin-top:.5rem">{n.pago_texto} Los depósitos se realizan únicamente a las cuentas a nombre de {n.prov_razon} publicadas en la página <a href="/como-pagar" style="text-decoration:underline">Cómo pagar</a>. No pedimos pagos a cuentas personales.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">5. Comprobantes de pago</h2>
+    <p style="margin-top:.5rem">Los comprobantes de pago (factura o boleta) son emitidos por {n.prov_razon.replace(/\.$/, '')}. Para facturas, el cliente debe indicar su RUC y razón social correctos.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">6. Entrega, cambios y devoluciones</h2>
+    <p style="margin-top:.5rem">Las condiciones están en nuestra <a href="/envios-y-reembolsos" style="text-decoration:underline">Política de envío y reembolso</a>.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">7. Marcas y contenido</h2>
+    <p style="margin-top:.5rem">PROLIMSO y las imágenes de los productos pertenecen a sus titulares. No se permite su uso sin autorización.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">8. Datos personales</h2>
+    <p style="margin-top:.5rem">El tratamiento de tus datos se explica en la <a href="/privacidad" style="text-decoration:underline">Política de privacidad</a>.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">9. Reclamos</h2>
+    <p style="margin-top:.5rem">Puedes registrar un reclamo o queja en el <a href="/libro-de-reclamaciones" style="text-decoration:underline">Libro de Reclamaciones</a> virtual.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">10. Ley aplicable</h2>
+    <p style="margin-top:.5rem">Estos términos se rigen por las leyes del Perú.</p>
+  </div></section>
+</Base>

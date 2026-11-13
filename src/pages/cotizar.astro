@@ -1,0 +1,517 @@
+---
+import Base from '../layouts/Base.astro';
+import { getNegocio } from '../data/content';
+import { CIUDADES, TIPOS_NEGOCIO } from '../data/validar';
+import { getProductos, getCuentas } from '../data/content';
+const cuentas = (await getCuentas()).map((c) => ({ b: c.banco, t: c.titular, e: c.etiqueta, n: c.numero, c: c.cci }));
+const n = await getNegocio();
+const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f: p.foto_url, u: p.unidades_empaque, b: p.bulto_emp || 0, q: p.consultar ? 1 : 0, e: p.empaque_nombre || 'empaque', c: (p.codigos || []).join(' '), o: p.colores || '' }));
+---
+<Base title={`Cotiza tu pedido | ${n.nombre}`} description="Ingresa tu RUC o DNI, elige tus productos y colores y envía tu pedido por WhatsApp." noindex>
+  <section>
+    <div class="wrap" style="max-width:760px">
+      <h1 style="font-size:clamp(2rem,6vw,3.2rem)">Cotiza tu pedido</h1>
+      <p class="aviso" style="margin-top:1rem">{n.aviso_minimo}</p>
+
+      <div id="gate" class="glass gate">
+        <h2>1. Ingresa con tu RUC o DNI</h2>
+        <p class="hint">Es obligatorio para armar tu cotización.</p>
+        <form id="gf" class="f dos" novalidate>
+          <div class="full seg" role="radiogroup" aria-label="Tipo de documento">
+            <label><input type="radio" name="gt" value="RUC" checked /> RUC</label>
+            <label><input type="radio" name="gt" value="DNI" /> DNI</label>
+          </div>
+          <label class="full">Número <input name="gn" inputmode="numeric" maxlength="11" autocomplete="off" required /></label>
+          <label class="full">Clave de cliente (solo si ya eres cliente de PROLIMSO) <input name="gc" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="6 dígitos (opcional)" /></label>
+          <p class="hint full" style="margin:0">¿Eres cliente y no tienes tu clave? Pídesela a tu asesor por WhatsApp. Si aún no eres cliente, déjala en blanco.</p>
+          <p class="err full" id="gerr" role="alert"></p>
+          <button class="btn btn-gold full" id="gbtn" type="submit">Continuar</button>
+        </form>
+      </div>
+
+      <div id="paso" hidden>
+        <div class="glass idok"><span id="idtxt"></span><button class="btn btn-g btn-s" id="cambiar" type="button">Cambiar</button></div>
+
+        <div id="datos" class="glass form" style="margin-bottom:1rem">
+          <h2 id="h2d" style="font-size:1.4rem;margin-bottom:1rem">2. Tus datos</h2>
+          <div class="f dos">
+            <label class="full" data-nc><span id="lbl-nombre">Razón social</span> <input form="form" name="nombre" maxlength="120" autocomplete="organization" required /></label>
+            <label data-nc>Persona de contacto <input form="form" name="contacto" maxlength="80" autocomplete="name" /></label>
+            <label data-nc>WhatsApp <input form="form" name="whatsapp" type="tel" inputmode="numeric" maxlength="12" placeholder="9XXXXXXXX" autocomplete="tel" required /></label>
+            <label data-nc>Ciudad <select form="form" name="ciudad" required><option value="">Elige…</option>{CIUDADES.map((c) => <option>{c}</option>)}</select></label>
+            <label id="otra" data-nc hidden>¿Cuál? <input form="form" name="ciudad_otra" maxlength="60" /></label>
+            <label data-nc>Tipo de negocio <select form="form" name="tipo_negocio" required><option value="">Elige…</option>{TIPOS_NEGOCIO.map((c) => <option>{c}</option>)}</select></label>
+            <h3 class="full" id="h3ag" style="font-size:1.1rem;margin-top:.6rem">Agencia de envío (opcional)</h3>
+            <label><span id="lbl-ag">Nombre de la agencia</span> <input form="form" name="ag_nombre" maxlength="80" list="dl-ag" autocomplete="off" /><datalist id="dl-ag"></datalist></label>
+            <label data-nc>RUC de la agencia <input form="form" name="ag_ruc" inputmode="numeric" maxlength="11" autocomplete="off" /></label>
+            <label class="full"><span id="lbl-agc">Contacto de la agencia (teléfono o persona)</span> <input form="form" name="ag_contacto" maxlength="80" autocomplete="off" /></label>
+            <label class="full" data-c hidden>Condición de pago <select form="form" name="condicion"><option value="">Elige…</option><option value="contado">Contado</option><option value="factura">Crédito con factura</option><option value="letra">Crédito con letra</option></select></label>
+            <label class="chk full" data-nc><input form="form" type="checkbox" name="consent" /> Acepto que PROLIMSO use mis datos para enviarme la cotización y contactarme. <a href="/privacidad" style="text-decoration:underline">Política de privacidad</a></label>
+          </div>
+          <p class="err" id="errd" role="alert"></p>
+        </div>
+
+        <div class="glass buscador">
+          <label for="q">3. BUSCA TU PRODUCTO</label>
+          <input id="q" type="search" aria-label="Buscar producto por nombre o código" placeholder="Escribe el nombre o código (ej. cesto, canasta, tacho)" autocomplete="off" />
+          <div id="res" class="res" aria-live="polite"></div>
+        </div>
+        <script type="application/json" id="cat" set:html={JSON.stringify(buscable).replace(/</g, '\\u003c')}></script>
+        <div id="ultimo" class="glass" hidden style="padding:.7rem 1rem;margin-bottom:.8rem;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between"></div>
+        <div id="edit"></div>
+        <script type="application/json" id="ctas" set:html={JSON.stringify(cuentas).replace(/</g, '\\u003c')}></script>
+
+        <h2 style="font-size:1.4rem;margin:1.6rem 0 .6rem">4. Mi pedido</h2>
+        <div id="abierto" class="glass" hidden style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.7rem 1rem;margin-bottom:.8rem;border:1px solid var(--gold)"><span id="abtxt" style="font-weight:700"></span><span style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-gold btn-s" id="cerrarped" type="button" hidden>Cerrar pedido</button><button class="btn btn-g btn-s" id="nuevoped" type="button">Nuevo pedido</button></span></div>
+        <div id="lista" class="lista-v" aria-live="polite"></div>
+        <div id="print" class="print-only" aria-hidden="true"></div>
+        <div id="vacio" class="glass vacio"><p>Aún no agregaste productos. Búscalos arriba o entra al <a href="/catalogo" style="text-decoration:underline">catálogo</a>.</p></div>
+        <p id="tot" class="hint" style="margin:.8rem 0" hidden></p>
+        <p id="ptot" hidden style="margin:.4rem 0 1rem;font-size:1.25rem;font-weight:700"></p>
+        <p id="pdesc" hidden style="margin:-.6rem 0 1rem;font-size:1.15rem;font-weight:700;color:#ffd24a"></p>
+        <p id="pnota" class="hint" hidden></p>
+        <p id="pdfwrap" hidden style="margin-bottom:1rem"><button class="btn btn-g btn-s" id="pdf" type="button">Guardar mi lista en PDF</button></p>
+
+        <form id="form" class="glass form" novalidate hidden>
+          <h2 id="h4" style="font-size:1.4rem;margin-bottom:1rem">5. Enviar pedido</h2>
+          <div class="f dos">
+            <label class="full">Observaciones (opcional) <textarea name="observaciones" maxlength="500"></textarea></label>
+            <input class="hp" name="web" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          </div>
+          <p class="err" id="err" role="alert"></p>
+          <button class="btn btn-wa" id="enviar" type="submit" style="width:100%;margin-top:.4rem">Enviar mi pedido por WhatsApp</button>
+        </form>
+      </div>
+    </div>
+  </section>
+  <script>
+    import { leer, ponerLinea, quitar, vaciar, suma, totales, MAX } from '../lib/lista';
+    import type { Linea } from '../lib/lista';
+    import { rucValido, dniValido } from '../data/validar';
+    import { aplicarEscala, bonosPedido, ventaMin } from '../lib/escala';
+    import { claveModelo } from '../data/grupos';
+    import type { Bonif } from '../lib/escala';
+    const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s)!;
+    const el = <K extends keyof HTMLElementTagNameMap>(t: K, props: Record<string, unknown> = {}, ...kids: (Node | string)[]) => { const e = Object.assign(document.createElement(t), props); e.append(...kids); return e; };
+    const t0 = Date.now();
+    const CAT: { s: string; n: string; f: string; u: number; b: number; q: number; e: string; c: string; o: string }[] = JSON.parse(document.getElementById('cat')!.textContent || '[]');
+    const UNICO = 'Único';
+    const opciones = (p: { o: string }) => { const o = (p.o || '').split(/,|\/|\sy\s/).map((t) => t.trim()).filter(Boolean); return o.length >= 2 ? o : [UNICO]; };
+    const fmt = (n: number) => n.toLocaleString('es-PE');
+    const precioTxt = (slug: string, u: number, e: string) => { const pr = precioDe(slug); if (!pr) return ''; const b0 = aplicarEscala(pr as any, u, 1); let t = `${S(b0.u)} c/u x ${u} = ${S(b0.e)} por ${e}`; let ant = b0.u; const pm: string[] = []; [...(pr.esc || [])].sort((a, b) => a.d - b.d).forEach((x) => { const f = aplicarEscala(pr as any, u, x.d); if (f.u < ant) { pm.push(`desde ${x.d} emp. ${S(f.u)} c/u`); ant = f.u; } }); if (pm.length) t += '\nPromoción: ' + pm.join(' · '); return t; };
+    const LIM = (s: string) => s.replace(/^\s*·\s*/, '');
+    const plural = (n: number, w: string) => (n === 1 ? w : w + 's');
+    // "12k" = 12 000, "1,5k" = 1 500, "250000" = 250 000
+    function leerCant(t: string): number {
+      let s = t.toLowerCase().replace(/\s/g, ''); if (!s) return 0;
+      const k = /k$/.test(s); s = s.replace(/k$/, '');
+      if (k) s = s.replace(',', '.'); else s = s.replace(/[.,]/g, '');
+      const n = Number(s); if (!isFinite(n) || n <= 0) return 0;
+      return Math.min(MAX, Math.floor(k ? n * 1000 : n));
+    }
+
+    // ---- Paso 1: documento ----
+    type Id = { ult?: any; t: 'RUC' | 'DNI'; n: string; c?: string; nom?: string; cp?: boolean; l?: string; dc?: number; pr?: Record<string, { u: number | null; e: number; esc?: Array<{ d: number; x?: number; u?: number }> | null; g?: string | null; bon?: Bonif | null }> };
+    const KID = 'pzs_id_v1';
+    const getId = (): Id | null => { try { const x = JSON.parse(sessionStorage.getItem(KID) || 'null'); if (x && (x.t === 'RUC' ? rucValido(x.n) : x.t === 'DNI' && dniValido(x.n))) return x; } catch {} return null; };
+    let ID: Id | null = getId();
+    const gf = $<HTMLFormElement>('#gf');
+    gf.addEventListener('change', () => { const t = (new FormData(gf).get('gt') as string); (gf.elements.namedItem('gn') as HTMLInputElement).maxLength = t === 'RUC' ? 11 : 8; });
+    gf.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = new FormData(gf), t = v.get('gt') === 'DNI' ? 'DNI' : 'RUC', n = String(v.get('gn') || '').replace(/\D/g, ''), c = String(v.get('gc') || '').replace(/\D/g, '');
+      if (t === 'RUC' ? !rucValido(n) : !dniValido(n)) { $('#gerr').textContent = t === 'RUC' ? 'El RUC no es válido (11 dígitos).' : 'El DNI debe tener 8 dígitos.'; return; }
+      if (String(v.get('gc') || '').trim() && c.length !== 6) { $('#gerr').textContent = 'La clave tiene 6 dígitos.'; return; }
+      $('#gerr').textContent = '';
+      let nuevo: Id = { t, n };
+      if (c) {
+        const b = $<HTMLButtonElement>('#gbtn'); b.disabled = true; b.textContent = 'Verificando…';
+        try {
+          const r = await fetch('/api/acceso', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ doc: n, clave: c }) });
+          const d = await r.json();
+          if (!r.ok || !d.ok) { $('#gerr').textContent = d.error || 'Documento o clave incorrectos.'; b.disabled = false; b.textContent = 'Continuar'; return; }
+          nuevo = { t, n, c, nom: d.nombre, cp: !!d.conPrecios, l: String(d.lista || ''), dc: Number(d.dc) || 0, ult: d.ultimo || null, pr: d.precios || {} };
+        } catch { $('#gerr').textContent = 'Sin conexión. Intenta de nuevo.'; b.disabled = false; b.textContent = 'Continuar'; return; }
+        b.disabled = false; b.textContent = 'Continuar';
+      }
+      ID = nuevo;
+      try { sessionStorage.setItem(KID, JSON.stringify(ID)); } catch {}
+      entrar();
+    });
+    $('#cambiar').addEventListener('click', () => { ID = null; try { sessionStorage.removeItem(KID); } catch {} $('#paso').hidden = true; $('#gate').hidden = false; });
+    function entrar() {
+      if (!ID) return;
+      $('#gate').hidden = true; $('#paso').hidden = false;
+      // La lista pertenece a un solo documento: si entra otro cliente, se empieza con una lista vacía.
+      // Pedido abierto: sigue ahí hasta que se envíe o se pulse "Nuevo pedido". Si entra OTRO cliente, no se mezclan: se pide cerrar el pedido abierto.
+      try {
+        const KD = 'pzs_lista_dueno'; const d = localStorage.getItem(KD);
+        if (d && d !== ID.n && leer().length) {
+          const nl = leer().length;
+          if (!confirm(`Hay un pedido abierto sin enviar del documento ${d} con ${nl} ${nl === 1 ? 'producto' : 'productos'}.\n\n¿Descartarlo y empezar un pedido nuevo para ${ID.n}?\n\nSi quieres conservarlo, pulsa Cancelar e ingresa de nuevo con el documento ${d} para enviarlo.`)) {
+            ID = null; try { sessionStorage.removeItem(KID); } catch {} $('#paso').hidden = true; $('#gate').hidden = false; $('#gerr').textContent = `Hay un pedido abierto del documento ${d}. Ciérralo primero (envíalo) o descártalo.`; return;
+          }
+          vaciar(); limpiarForm();
+        }
+        if (d !== ID.n) localStorage.setItem(KD, ID.n);
+      } catch { vaciar(); }
+      $('#idtxt').textContent = `${ID.t}: ${ID.n}` + (ID.c ? ` · Cliente${ID.nom ? ': ' + ID.nom : ''}` : '');
+      $('#lbl-nombre').textContent = ID.t === 'RUC' ? 'Razón social' : 'Nombre completo';
+      // Cliente de cartera (entra con clave): sus datos ya están registrados; solo se pide transporte, observaciones y condición de pago.
+      const car = !!ID.c;
+      document.querySelectorAll<HTMLElement>('[data-nc]').forEach((e) => { if (car) e.style.setProperty('display', 'none', 'important'); else e.style.removeProperty('display'); });
+      document.querySelectorAll<HTMLElement>('[data-c]').forEach((e) => { e.hidden = false; e.style.display = car ? '' : 'none'; });
+      $('#h2d').textContent = car ? '2. Tus datos de envío' : '2. Tus datos';
+      $('#h4').textContent = car ? '5. Cerrar pedido' : '5. Enviar pedido';
+      $('#h3ag').textContent = car ? 'Transporte' : 'Agencia de envío (opcional)';
+      $('#lbl-ag').textContent = car ? 'Agencia de transportes (obligatorio)' : 'Nombre de la agencia';
+      $('#lbl-agc').textContent = car ? 'Datos del transportista (nombre, teléfono, destino)' : 'Contacto de la agencia (teléfono o persona)';
+      $('#enviar').textContent = car ? 'Cerrar pedido' : 'Enviar mi pedido por WhatsApp';
+      $('#cerrarped').hidden = !car; $('#nuevoped').textContent = car ? 'Descartar pedido' : 'Nuevo pedido';
+      pintar(); restaurarForm();
+      if (car && ID.ult) {
+        const u = ID.ult, setv = (k: string, v: string) => { const e = f.elements.namedItem(k) as HTMLInputElement | null; if (e && v && !e.value) e.value = v; };
+        setv('ag_nombre', u.agencia || ''); setv('ag_contacto', u.datos || ''); setv('condicion', u.condicion || '');
+        pintar();
+      }
+      pintarUltimo(); cargarTransportes();
+      const p = new URLSearchParams(location.search).get('p');
+      if (p) { const prod = CAT.find((x) => x.s === p); if (prod) abrir(prod); try { const u = new URL(location.href); u.searchParams.delete('p'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash); } catch {} }
+    }
+
+    // ---- Agencias de transporte (solo cartera): lista desplegable con búsqueda y datos autocompletados ----
+    let TRM: Record<string, string> = {}, TRL = new Map<string, string>();
+    async function cargarTransportes() {
+      if (!ID || !ID.c) return;
+      try {
+        const r = await fetch('/api/transportes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ doc: ID.n, clave: ID.c }) });
+        const d = await r.json();
+        TRM = d.mis || {}; TRL = new Map((d.lista || []).map((x: string[]) => [String(x[0]).toUpperCase(), String(x[1] || '')]));
+        const dl = document.getElementById('dl-ag')!; dl.replaceChildren(...(d.lista || []).map((x: string[]) => { const o = document.createElement('option'); o.value = x[0]; return o; }));
+      } catch {}
+    }
+    const agIn = () => f.elements.namedItem('ag_nombre') as HTMLInputElement, agcIn = () => f.elements.namedItem('ag_contacto') as HTMLInputElement;
+    function autoDatos() {
+      if (!ID || !ID.c) return;
+      const k = agIn().value.trim().toUpperCase(), c = agcIn();
+      if (!k || (c.value.trim() && c.dataset.auto !== '1')) return;
+      const v = TRM[k] || TRL.get(k) || '';
+      if (v || c.dataset.auto === '1') { c.value = v; c.dataset.auto = v ? '1' : ''; guardarForm(); }
+    }
+
+    // ---- Repetir el último pedido (solo cartera) ----
+    function lineasDe(u: any): Array<{ s: string; cols: Record<string, number> }> {
+      const out: Array<{ s: string; cols: Record<string, number> }> = [];
+      for (const it of Array.isArray(u?.items) ? u.items : []) {
+        const cols: Record<string, number> = {};
+        if (Array.isArray(it.cols) && it.cols.length) for (const c of it.cols) cols[String(c.color || UNICO)] = (cols[String(c.color || UNICO)] || 0) + (Number(c.qty) || 0);
+        else if (it.color) for (const par of String(it.color).split(',')) { const m = par.trim().match(/^(\d+)\s+(.+)$/); if (m) cols[m[2]] = (cols[m[2]] || 0) + Number(m[1]); }
+        else cols[UNICO] = Number(it.empaques) || 0;
+        out.push({ s: String(it.slug), cols });
+      }
+      return out;
+    }
+    function pintarUltimo() {
+      const box = $('#ultimo'); box.replaceChildren();
+      const u = ID && ID.c ? ID.ult : null;
+      if (!u || !Array.isArray(u.items) || !u.items.length) { box.hidden = true; box.style.display = 'none'; return; }
+      const fch = u.fecha ? new Date(u.fecha).toLocaleDateString('es-PE') : '';
+      const sp = el('span', { textContent: `Tu último pedido ${u.numero || ''} ${fch ? '(' + fch + ')' : ''} · ${u.items.length} ${u.items.length === 1 ? 'producto' : 'productos'}`, style: 'font-weight:700' });
+      const b = el('button', { type: 'button', className: 'btn btn-g', textContent: 'Repetir este pedido' });
+      b.addEventListener('click', () => {
+        if (leer().length && !confirm('Se reemplazará el pedido abierto por tu último pedido. ¿Continuar?')) return;
+        vaciar();
+        let omitidos = 0;
+        for (const l of lineasDe(u)) {
+          const p = CAT.find((x) => x.s === l.s);
+          if (!p) { omitidos++; continue; }
+          ponerLinea({ slug: p.s, nombre: p.n + (p.q ? ' (consultar disponibilidad)' : ''), foto: p.f, uemp: p.u }, l.cols);
+        }
+        pintar();
+        if (omitidos) alert(`${omitidos} ${omitidos === 1 ? 'producto ya no está disponible y se omitió' : 'productos ya no están disponibles y se omitieron'}.`);
+        document.getElementById('lista')!.scrollIntoView({ behavior: 'smooth' });
+      });
+      box.append(sp, b); box.hidden = false; box.style.display = 'flex';
+    }
+
+    // ---- Precios (solo clientes de cartera verificados) ----
+    const S = (n: number) => 'S/ ' + n.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const conPrecios = () => !!(ID && ID.c && ID.cp);
+    // Infantas no tiene venta mínima por empaques (solo Lista 1 y visitantes).
+    const bm = (b: number) => (ID?.l && /infantas/i.test(ID.l) ? 0 : b);
+    const precioDe = (slug: string) => (conPrecios() ? ID!.pr?.[slug] : undefined);
+    // Precio final según la cantidad de paquetes (descuento por escala: solo puede bajar el precio).
+    const precioN = (slug: string, uemp: number, paq: number) => { const pr = precioDe(slug); return pr ? aplicarEscala(pr as any, uemp, paq) : null; };
+    // Paquetes que cuentan para la escala: del producto o, si tiene grupo, de todos los de su grupo (colores de un mismo modelo).
+    const paqDe = (x: Linea) => { const g = precioDe(x.slug)?.g; return g ? leer().reduce((a, l) => a + (precioDe(l.slug)?.g === g ? suma(l) : 0), 0) : suma(x); };
+    const subtotal = (x: Linea) => { const f = precioN(x.slug, x.uemp, paqDe(x)); return f ? suma(x) * f.e : null; };
+    // Bonificación (regalo a S/ 0.00 por cada N paquetes): no cambia el precio, solo agrega unidades gratis.
+    const bonDe = (slug: string) => (conPrecios() ? precioDe(slug)?.bon : null);
+    const nomDe = (slug: string) => CAT.find((c) => c.s === slug)?.n || slug;
+    const avisoBon = (slug: string) => { const b = bonDe(slug); if (!b || !b.cada) return ''; return ` · Bonificación: ${b.uni} unid. de regalo por cada ${b.cada} ${b.base === 'u' ? 'unidades' : b.cada === 1 ? 'paquete' : 'paquetes'}${b.grupo ? ' (se suman las presentaciones)' : ''}${b.rs && b.rs !== slug ? ' · el regalo es ' + nomDe(b.rs) : ''}`; };
+    const bonosDe = (ls: Linea[]) => (conPrecios() ? bonosPedido(ls.map((x) => ({ slug: x.slug, empaques: suma(x), unidades: suma(x) * x.uemp })), bonDe) : []);
+    const textoBonos = (ls: Linea[]) => bonosDe(ls).map((b) => ` + ${fmt(b.uni)} unid. de BONIFICACIÓN de ${nomDe(b.slug)} (S/ 0.00)`).join('');
+    const pUnid = (slug: string, uemp: number, paq = 1) => { const f = precioN(slug, uemp, paq); return f ? f.u : null; };
+    const avisoEscala = (slug: string, uemp: number) => { const pr = precioDe(slug); if (!pr?.esc?.length) return ''; const base = aplicarEscala(pr as any, uemp, 1).u; const t = [...pr.esc].sort((a, b) => a.d - b.d).find((x) => aplicarEscala(pr as any, uemp, x.d).u < base); return t ? ` · Descuento por volumen: desde ${t.d} ${t.d === 1 ? 'paquete' : 'paquetes'} baja el precio${pr.g ? ' (se suman todos los colores del modelo)' : ''}` : ''; };
+
+    // ---- Paso 2/3: buscar y editar producto ----
+    const norm = (t: string) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    function buscar() {
+      const q = norm((document.getElementById('q') as HTMLInputElement).value.trim()), cont = $('#res');
+      if (q.length < 2) { cont.replaceChildren(); return; }
+      const ws = q.split(/\s+/);
+      const vistos = new Set<string>();
+      // Cliente con precios: solo presentaciones con precio en SU lista (si otra presentación del mismo modelo sí lo tiene).
+      const famConPrecio = new Set<string>();
+      if (conPrecios()) for (const x of CAT) if (precioDe(x.s)) famConPrecio.add(claveModelo(x.n));
+      const hit = CAT.filter((p) => { const t = norm(p.n + ' ' + p.c); return ws.every((w) => t.includes(w)); })
+        .filter((p) => !conPrecios() || !!precioDe(p.s) || !famConPrecio.has(claveModelo(p.n)))
+        // Primero los que empiezan con lo buscado (ej. "Mango Metálico" antes que "Escoba X, Mango Metálico").
+        .sort((a, b) => Number(norm(b.n).startsWith(q)) - Number(norm(a.n).startsWith(q)))
+        .filter((p) => { const v = variante(p.n); if (!v) return true; if (vistos.has(v.m)) return false; vistos.add(v.m); return true; }).slice(0, 8);
+      if (!hit.length) { cont.replaceChildren(el('p', { className: 'hint', textContent: 'No encontramos ese producto. Prueba con otra palabra.' })); return; }
+      cont.replaceChildren(...hit.map((p) => {
+        const row = el('button', { type: 'button', className: 'res-i' });
+        row.style.cssText = 'text-align:left;width:100%;background:none;border:0;color:inherit;font:inherit;cursor:pointer';
+        const im = p.f ? el('img', { src: p.f, alt: '', loading: 'lazy' }) : el('div', { className: 'ph0' });
+        row.append(im, el('div', {}, el('div', { className: 'nm', textContent: (variante(p.n)?.m || p.n) + ' (' + ventaMin(p.u, bm(p.b), p.e) + ')' + (p.q ? ' (consultar disponibilidad)' : '') }), el('div', { className: 'un', textContent: LIM(precioTxt(p.s, p.u, p.e).split('\n')[0] + (variante(p.n) ? ' · varios colores' : '')) })));
+        row.addEventListener('click', () => abrir(p));
+        return row;
+      }));
+    }
+    $('#q').addEventListener('input', buscar);
+
+    // Modelos con un producto por color (sillas Mimbre y Bicolor Bambú, Papelera 10 Lt): se muestran en UNA sola ventana con todos sus colores.
+    const VARIANTES = [/^(Silla (?:Mimbre|Bicolor Bamb[úu]))\s+(.+)$/i, /^(Papelera 10 Lt)\s*\((.+)\)$/i];
+    const variante = (n: string) => { for (const r of VARIANTES) { const m = n.match(r); if (m) { const c = m[2].trim().replace(/^colores\s+/i, ''); return { m: m[1].trim(), c: c.charAt(0).toUpperCase() + c.slice(1) }; } } return null; };
+    const miembrosDe = (p: (typeof CAT)[number]) => { const v = variante(p.n); return v ? CAT.filter((x) => variante(x.n)?.m === v.m) : []; };
+
+    function abrirGrupo(mi: typeof CAT) {
+      const modelo = variante(mi[0].n)!.m, u = mi[0].u, em = mi[0].e;
+      const previos = leer();
+      const caja = el('div', { className: 'glass prod-r' });
+      const foto = mi.find((m) => m.f)?.f || '';
+      const im = foto ? el('img', { src: foto, alt: modelo }) : el('div', { className: 'ph0' });
+      const pr0 = precioDe(mi[0].s);
+      const der = el('div', {}, el('div', { className: 'nm', textContent: modelo + ' (' + ventaMin(u, bm(mi[0].b), em) + ')' + (mi[0].q ? ' (consultar disponibilidad)' : '') }), el('div', { className: 'un', textContent: 'Escribe la cantidad por color' }));
+      const grid = el('div', { className: 'colq' });
+      const tot = el('div', { className: 'tot' });
+      const filas = mi.map((m) => {
+        const ant = previos.find((x) => x.slug === m.s); const antN = ant ? suma(ant) : 0;
+        const cb = el('input', { type: 'checkbox', checked: antN > 0 });
+        const qn = el('input', { className: 'qn', type: 'text', inputMode: 'decimal', placeholder: '0', disabled: !cb.checked, value: antN ? String(antN) : '' });
+        const nombreColor = variante(m.n)!.c;
+        qn.setAttribute('aria-label', `Cantidad de ${nombreColor}`);
+        const eq = el('span', { className: 'eq' });
+        const lab = el('label', {}, cb, el('span', { className: 'cn', textContent: nombreColor }));
+        const fila = el('div', { style: 'display:flex;align-items:center;gap:.6rem;flex-wrap:wrap' }, lab, qn, eq);
+        lab.style.flex = '1';
+        const upd = () => { const n = cb.checked ? leerCant(qn.value) : 0; eq.textContent = n ? `= ${fmt(n * m.u)} unid.` : ''; calc(); };
+        cb.addEventListener('change', () => { qn.disabled = !cb.checked; if (cb.checked) { if (!leerCant(qn.value)) qn.value = '1'; qn.focus(); qn.select(); } upd(); });
+        qn.addEventListener('input', upd);
+        grid.append(fila);
+        return { m, cb, qn, upd, antN, val: () => (cb.checked ? leerCant(qn.value) : 0) };
+      });
+      function calc() {
+        const e = filas.reduce((a, f) => a + f.val(), 0);
+        if (!e) { tot.textContent = 'Marca un color y escribe la cantidad.'; return; }
+        let t = `Total: ${fmt(e)} ${plural(e, em)} = ${fmt(e * u)} unidades`;
+        if (precioDe(mi[0].s)) { const f = precioN(mi[0].s, u, e)!; t += ` · ${S(e * f.e)} (${S(f.u)} c/u${f.promo ? ', precio por volumen' : ''})`; }
+        tot.textContent = t;
+      }
+      filas.forEach((f) => f.upd());
+      const hayPrevio = filas.some((f) => f.antN > 0);
+      const ok = el('button', { className: 'btn btn-gold btn-s', type: 'button', textContent: hayPrevio ? 'Actualizar mi pedido' : 'Agregar a mi pedido' });
+      const cancel = el('button', { className: 'btn btn-g btn-s', type: 'button', textContent: 'Cancelar' });
+      ok.addEventListener('click', () => {
+        if (!filas.some((f) => f.val() > 0)) { tot.textContent = 'Marca al menos un color y escribe la cantidad.'; return; }
+        filas.forEach((f) => { const n = f.val(); if (n > 0) ponerLinea({ slug: f.m.s, nombre: f.m.n + (f.m.q ? ' (consultar disponibilidad)' : ''), foto: f.m.f, uemp: f.m.u }, { [UNICO]: n }); else if (f.antN > 0) quitar(f.m.s); });
+        $('#edit').replaceChildren(); (document.getElementById('q') as HTMLInputElement).value = ''; $('#res').replaceChildren();
+        $('#lista').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      cancel.addEventListener('click', () => $('#edit').replaceChildren());
+      der.append(grid, tot, el('div', { className: 'acc' }, ok, cancel));
+      caja.append(im, der);
+      $('#edit').replaceChildren(caja); $('#res').replaceChildren();
+      caja.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function abrir(p: (typeof CAT)[number]) {
+      const mi = miembrosDe(p); if (mi.length > 1) return abrirGrupo(mi);
+      const previo = leer().find((x) => x.slug === p.s)?.cols || {};
+      const ops = opciones(p);
+      const caja = el('div', { className: 'glass prod-r' });
+      const im = p.f ? el('img', { src: p.f, alt: p.n }) : el('div', { className: 'ph0' });
+      const der = el('div', {}, el('div', { className: 'nm', textContent: p.n + ' (' + ventaMin(p.u, bm(p.b), p.e) + ')' + (p.q ? ' (consultar disponibilidad)' : '') }), el('div', { className: 'un', textContent: (p.o ? 'Escribe la cantidad por color' : '') }));
+      const grid = el('div', { className: 'colq' });
+      const tot = el('div', { className: 'tot' });
+      const filas = ops.map((o) => {
+        const cb = el('input', { type: 'checkbox', checked: (previo[o] ?? 0) > 0 });
+        const qn = el('input', { className: 'qn', type: 'text', inputMode: 'decimal', placeholder: '0', disabled: !cb.checked, value: previo[o] ? String(previo[o]) : '' });
+        qn.setAttribute('aria-label', `Cantidad de ${o}`);
+        const eq = el('span', { className: 'eq' });
+        const lab = el('label', {}, cb, el('span', { className: 'cn', textContent: o === UNICO ? 'Cantidad' : o }));
+        const fila = el('div', { style: 'display:flex;align-items:center;gap:.6rem;flex-wrap:wrap' }, lab, qn, eq);
+        lab.style.flex = '1';
+        const upd = () => { const n = cb.checked ? leerCant(qn.value) : 0; eq.textContent = n ? `= ${fmt(n * p.u)} unid.` : ''; calc(); };
+        cb.addEventListener('change', () => { qn.disabled = !cb.checked; if (cb.checked) { if (!leerCant(qn.value)) qn.value = '1'; qn.focus(); qn.select(); } upd(); });
+        qn.addEventListener('input', upd);
+        grid.append(fila);
+        return { o, cb, qn, upd, val: () => (cb.checked ? leerCant(qn.value) : 0) };
+      });
+      function calc() { const e = filas.reduce((a, f) => a + f.val(), 0); tot.textContent = e ? `Total: ${fmt(e)} ${plural(e, p.e)} = ${fmt(e * p.u)} unid.` + (precioDe(p.s) ? (() => { const g = precioDe(p.s)?.g; const otros = g ? leer().reduce((a, l) => a + (l.slug !== p.s && precioDe(l.slug)?.g === g ? suma(l) : 0), 0) : 0; const f = precioN(p.s, p.u, e + otros)!; return ` · ${S(e * f.e)}` + ` (${S(f.u)} c/u)` + textoBonos([{ slug: p.s, nombre: p.n, foto: p.f, uemp: p.u, cols: { [UNICO]: e } }]); })() : '') : 'Marca un color y escribe la cantidad.'; }
+      filas.forEach((f) => f.upd());
+      const ok = el('button', { className: 'btn btn-gold btn-s', type: 'button', textContent: previo && Object.keys(previo).length ? 'Actualizar mi pedido' : 'Agregar a mi pedido' });
+      const cancel = el('button', { className: 'btn btn-g btn-s', type: 'button', textContent: 'Cancelar' });
+      ok.addEventListener('click', () => {
+        const cols: Record<string, number> = {}; filas.forEach((f) => { const n = f.val(); if (n > 0) cols[f.o] = n; });
+        if (!Object.keys(cols).length) { tot.textContent = 'Marca al menos un color y escribe la cantidad.'; return; }
+        ponerLinea({ slug: p.s, nombre: p.n + (p.q ? ' (consultar disponibilidad)' : ''), foto: p.f, uemp: p.u }, cols);
+        $('#edit').replaceChildren(); (document.getElementById('q') as HTMLInputElement).value = ''; $('#res').replaceChildren();
+        $('#lista').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      cancel.addEventListener('click', () => $('#edit').replaceChildren());
+      der.append(grid, tot, el('div', { className: 'acc' }, ok, cancel));
+      caja.append(im, der);
+      $('#edit').replaceChildren(caja); $('#res').replaceChildren();
+      caja.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ---- Lista del pedido ----
+    const condSel = () => String(((document.getElementById('form') as HTMLFormElement).elements.namedItem('condicion') as HTMLSelectElement | null)?.value || '');
+    const descContado = (monto: number) => (ID && ID.c && (ID.dc || 0) > 0 && conPrecios() && condSel() === 'contado' ? Math.round(monto * (ID.dc || 0)) / 100 : 0);
+    const CONDTXT: Record<string, string> = { contado: 'Contado', factura: 'Crédito con factura', letra: 'Crédito con letra' };
+    function pintar() {
+      const l = leer(), cont = $('#lista'), t = totales();
+      let ini = ''; try { if (l.length) { ini = localStorage.getItem('pzs_lista_inicio') || ''; if (!ini) { ini = new Date().toISOString(); localStorage.setItem('pzs_lista_inicio', ini); } } else localStorage.removeItem('pzs_lista_inicio'); } catch {}
+      const ab = $('#abierto'); ab.hidden = l.length === 0; ab.style.display = l.length ? 'flex' : 'none';
+      if (l.length) $('#abtxt').textContent = `Pedido abierto · ${l.length} ${l.length === 1 ? 'producto' : 'productos'}${ini ? ' · iniciado el ' + new Date(ini).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' }) : ''}`;
+      $('#vacio').hidden = l.length > 0; $('#form').hidden = l.length === 0; $('#pdfwrap').hidden = l.length === 0;
+      const tt = $('#tot'); tt.hidden = l.length === 0; tt.textContent = `Total: ${fmt(t.empaques)} ${plural(t.empaques, 'empaque')} · ${fmt(t.unidades)} unidades`;
+      const st = l.map(subtotal), pt = $('#ptot'), pn = $('#pnota');
+      const sinP = l.filter((x) => conPrecios() && !precioDe(x.slug)).length;
+      if (conPrecios() && l.length) { pt.hidden = false; pt.textContent = `Total estimado: ${S(st.reduce((a: number, b) => a + (b || 0), 0))}${sinP ? ' (sin contar productos sin precio)' : ''}`; pn.hidden = false; pn.textContent = 'Precios según tu lista de cliente, incluyen IGV. Cotización válida por 7 días, sujeta a confirmación por tu asesor.'; const dsc = descContado(st.reduce((a: number, b) => a + (b || 0), 0)); const pd = $('#pdesc'); pd.hidden = !dsc; if (dsc) pd.textContent = `Descuento por pago al contado (${ID!.dc}%): − ${S(dsc)} · Total a pagar: ${S(st.reduce((a: number, b) => a + (b || 0), 0) - dsc)}`; }
+      else if (ID && ID.c && !ID.cp && l.length) { $('#pdesc').hidden = true; pt.hidden = true; pn.hidden = false; pn.textContent = 'Tu asesor te enviará los precios por WhatsApp.'; }
+      else { $('#pdesc').hidden = true; pt.hidden = true; pn.hidden = true; }
+      const bonosL = bonosDe(l).map((b) => { const d = el('div', { className: 'glass item-l' }); d.append(el('div', { className: 'ph0' }), el('div', {}, el('div', { className: 'nm', textContent: `BONIFICACIÓN: ${nomDe(b.slug)}` }), el('div', { className: 'un', style: 'font-weight:700;color:#ffd24a', textContent: `${fmt(b.uni)} unidades de regalo · S/ 0.00` }))); return d; });
+      cont.replaceChildren(...l.map((x: Linea) => {
+        const d = el('div', { className: 'glass item-l' }); d.dataset.slug = x.slug;
+        const im = x.foto ? el('img', { src: x.foto, alt: '', loading: 'lazy' }) : el('div', { className: 'ph0' });
+        const cols = el('div', { className: 'col-t' }, ...Object.entries(x.cols).map(([c, n]) => el('div', { textContent: `${c === UNICO ? 'Cantidad' : c}: ${fmt(n)} (${fmt(n * x.uemp)} unid.)` })));
+        const ed = el('button', { className: 'quitar', type: 'button', textContent: 'Editar', style: 'color:#fff;margin-right:1rem' });
+        ed.addEventListener('click', () => { const p = CAT.find((c) => c.s === x.slug); if (p) abrir(p); });
+        const q = el('button', { className: 'quitar', type: 'button', textContent: 'Quitar' });
+        q.addEventListener('click', () => quitar(x.slug));
+        d.append(im, el('div', {}, el('div', { className: 'nm', textContent: x.nombre }), el('div', { className: 'un', textContent: `${fmt(suma(x))} ${plural(suma(x), 'empaque')} = ${fmt(suma(x) * x.uemp)} unidades` + (subtotal(x) != null ? ` · ${S(pUnid(x.slug, x.uemp, paqDe(x))!)} c/u · ${S(precioN(x.slug, x.uemp, paqDe(x))!.e)} c/empaque = ${S(subtotal(x)!)}` + (precioN(x.slug, x.uemp, paqDe(x))!.promo ? ' · precio por volumen' : '') : conPrecios() ? ' · sin precio en tu lista (se cotiza)' : '') }), cols, ed, q));
+        return d;
+      }), ...bonosL);
+    }
+    window.addEventListener('lista:change', pintar);
+
+    function armarImpresion(numero = '') {
+      const l = leer(), t = $('#print'), tt = totales();
+      const h1 = el('h1', { textContent: 'PROLIMSO Zona Sur · ' + (numero ? 'Pedido N° ' + numero : 'Lista de pedido') });
+      const f = el('p', { textContent: 'Fecha: ' + new Date().toLocaleDateString('es-PE') });
+      const fv = new FormData($<HTMLFormElement>('#form')), g = (k: string) => String(fv.get(k) || '').trim();
+      const nomCli = (g('nombre') || (ID && ID.nom) || '').trim();
+      const cli = el('p', { className: 'cli-print', textContent: [nomCli && `CLIENTE: ${nomCli}`, ID && `${ID.t}: ${ID.n}`].filter(Boolean).join('  ·  ') });
+      const car = !!(ID && ID.c);
+      const ag = el('p', { textContent: (car ? [g('ag_nombre') && `Agencia de transportes: ${g('ag_nombre')}`, g('ag_contacto') && `Transportista: ${g('ag_contacto')}`, g('condicion') && `Condición de pago: ${CONDTXT[g('condicion')] || ''}`] : [g('ag_nombre') && `Agencia: ${g('ag_nombre')}`, g('ag_ruc') && `RUC agencia: ${g('ag_ruc')}`, g('ag_contacto') && `Contacto: ${g('ag_contacto')}`]).filter(Boolean).join(' · ') });
+      const tb = el('table'); tb.innerHTML = '<thead><tr><th>Producto</th><th>Color</th><th>Empaques</th><th>Unidades</th>' + (conPrecios() ? '<th>P. unidad</th><th>P. empaque</th><th>Subtotal</th>' : '') + '</tr></thead>';
+      const body = el('tbody');
+      l.forEach((x) => Object.entries(x.cols).forEach(([c, n]) => { const tr = el('tr'); const pr = precioN(x.slug, x.uemp, paqDe(x)); [x.nombre, c === UNICO ? '—' : c, fmt(n), fmt(n * x.uemp), ...(conPrecios() ? [pr ? S(pr.u) : 'Por confirmar', pr ? S(pr.e) : 'Por confirmar', pr ? S(n * pr.e) : 'Por confirmar'] : [])].forEach((v) => tr.append(el('td', { textContent: v }))); body.append(tr); }));
+      bonosDe(l).forEach((bn) => { const tr = el('tr'); [nomDe(bn.slug) + ' (BONIFICACIÓN)', '—', '—', fmt(bn.uni), S(0), S(0), S(0)].forEach((v) => tr.append(el('td', { textContent: v }))); body.append(tr); });
+      tb.append(body);
+      const monto = conPrecios() ? l.reduce((a, x) => a + (subtotal(x) || 0), 0) : 0;
+      const r = el('p', {}, el('strong', { textContent: `Total: ${fmt(tt.empaques)} empaques · ${fmt(tt.unidades)} unidades` + (conPrecios() ? ` · ${S(monto)}${l.some((x) => subtotal(x) == null) ? ' (sin incluir productos por confirmar)' : ''}` : '') }));
+      const dsc = descContado(monto);
+      const rd = dsc ? el('p', {}, el('strong', { textContent: `Descuento por pago al contado (${ID!.dc}%): − ${S(dsc)} · TOTAL A PAGAR: ${S(monto - dsc)}` })) : null;
+      const nota = el('p', { textContent: conPrecios() ? 'Precios según lista del cliente, incluyen IGV. Cotización válida por 7 días, sujeta a confirmación.' + (l.some((x) => subtotal(x) == null) ? ' Los productos marcados "Por confirmar" se cotizan aparte; tu asesor te enviará su precio.' : '') : 'Aplican montos mínimos de venta por empaque cerrado. Los precios se confirman en la cotización.' });
+      let ctas: Node[] = [];
+      if (car && conPrecios()) {
+        try {
+          const cs = JSON.parse(document.getElementById('ctas')!.textContent || '[]') as Array<{ b: string; t: string; e: string; n: string; c: string }>;
+          if (cs.length) ctas = [el('p', {}, el('strong', { textContent: 'Cuentas para depositar:' })), ...cs.map((c) => el('p', { textContent: [c.b, c.e, c.t && 'Titular: ' + c.t, c.n && 'N° ' + c.n, c.c && 'CCI ' + c.c].filter(Boolean).join(' · ') }))];
+        } catch {}
+      }
+      t.replaceChildren(h1, f, ...(cli.textContent ? [cli] : []), ...(ag.textContent ? [ag] : []), tb, r, ...(rd ? [rd] : []), nota, ...ctas);
+    }
+    $('#pdf').addEventListener('click', () => {
+      armarImpresion();
+      // El navegador propone el nombre del PDF según el título de la página: lo dejamos con el nombre del cliente y la fecha.
+      const fv = new FormData($<HTMLFormElement>('#form'));
+      const cliente = String(fv.get('nombre') || '').trim() || (ID && (ID.nom || ID.n)) || 'Cliente';
+      const limpio = cliente.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+      const d = new Date(), p2 = (v: number) => String(v).padStart(2, '0');
+      const anterior = document.title;
+      document.title = `Pedido ${limpio} - PROLIMSO Zona Sur - ${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+      const volver = () => { document.title = anterior; window.removeEventListener('afterprint', volver); };
+      window.addEventListener('afterprint', volver);
+      window.print();
+    });
+
+    // ---- Paso 4: envío ----
+    const f = $<HTMLFormElement>('#form'), err = $('#err'), errd = $('#errd');
+    const dat = $('#datos');
+    const alCambiar = (e: Event) => { $('#otra').hidden = (f.elements.namedItem('ciudad') as HTMLSelectElement).value !== 'Otra'; if ((e.target as HTMLInputElement).name === 'condicion') pintar(); };
+    f.addEventListener('change', alCambiar); dat.addEventListener('change', alCambiar);
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault(); err.textContent = ''; errd.textContent = '';
+      document.querySelectorAll('[aria-invalid]').forEach((i) => i.removeAttribute('aria-invalid'));
+      const v = new FormData(f);
+      const mal = (campo: string, msg: string) => { const i = f.elements.namedItem(campo) as HTMLElement | null; i?.setAttribute('aria-invalid', 'true'); i?.focus(); (i && dat.contains(i) ? errd : err).textContent = msg; };
+      if (!ID) return mal('nombre', 'Ingresa primero tu RUC o DNI.');
+      const car = !!ID.c;
+      if (car) {
+        if (String(v.get('ag_nombre') || '').trim().length < 2) return mal('ag_nombre', 'Indica la agencia de transportes.');
+        if (!v.get('condicion')) return mal('condicion', 'Elige la condición de pago: contado, factura o letra.');
+      } else {
+      if (String(v.get('nombre')).trim().length < 3) return mal('nombre', 'Ingresa tu razón social o nombre.');
+      if (!/^(51)?9\d{8}$/.test(String(v.get('whatsapp')).replace(/\D/g, ''))) return mal('whatsapp', 'Ingresa un WhatsApp de 9 dígitos que empiece con 9.');
+      if (!v.get('ciudad')) return mal('ciudad', 'Elige tu ciudad.');
+      if (v.get('ciudad') === 'Otra' && String(v.get('ciudad_otra')).trim().length < 2) return mal('ciudad_otra', 'Escribe tu ciudad.');
+      if (!v.get('tipo_negocio')) return mal('tipo_negocio', 'Elige el tipo de negocio.');
+      }
+      const agr = String(v.get('ag_ruc') || '').replace(/\D/g, '');
+      if (agr && !rucValido(agr)) return mal('ag_ruc', 'El RUC de la agencia no es válido (11 dígitos).');
+      if (!car && !v.get('consent')) return mal('consent', 'Debes aceptar el uso de tus datos.');
+      const btn = $<HTMLButtonElement>('#enviar'); btn.disabled = true; btn.textContent = 'Enviando…';
+      const p = new URLSearchParams(location.search);
+      const origen = Object.fromEntries(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ref'].map((k) => [k, p.get(k) || sessionStorage.getItem(k) || '']));
+      try {
+        const r = await fetch('/api/pedido', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
+          doc_tipo: ID.t, doc_num: ID.n, clave: ID.c || '', nombre: v.get('nombre'), contacto: v.get('contacto'), whatsapp: v.get('whatsapp'), ciudad: v.get('ciudad'), ciudad_otra: v.get('ciudad_otra'),
+          tipo_negocio: v.get('tipo_negocio'), condicion: v.get('condicion'), observaciones: v.get('observaciones'), ag_nombre: v.get('ag_nombre'), ag_ruc: agr, ag_contacto: v.get('ag_contacto'), consent: true, web: v.get('web'), t: t0,
+          items: leer().map((x) => ({ slug: x.slug, cols: Object.entries(x.cols).map(([color, qty]) => ({ color, qty })) })), origen }) });
+        const d = await r.json();
+        if (!r.ok) { if (d.reautenticar) { ID = null; try { sessionStorage.removeItem(KID); } catch {} $('#paso').hidden = true; $('#gate').hidden = false; $('#gerr').textContent = d.error; return; } const ci = d.campo ? (f.elements.namedItem(d.campo) as HTMLElement | null) : null; ci?.setAttribute('aria-invalid', 'true'); if (ci && dat.contains(ci)) { errd.textContent = d.error || 'No se pudo enviar.'; ci.focus(); } else err.textContent = d.error || 'No se pudo enviar.'; btn.disabled = false; btn.textContent = 'Enviar mi pedido por WhatsApp'; return; }
+        try {
+          sessionStorage.setItem('pzs_wa', d.wa || ''); if (d.cerrado) sessionStorage.setItem('pzs_cerrado', '1');
+          if (d.numero) { armarImpresion(d.numero); sessionStorage.setItem('pzs_num', d.numero); sessionStorage.setItem('pzs_pdfhtml', $('#print').innerHTML); }
+        } catch {}
+        vaciar(); limpiarForm(); location.href = '/gracias';
+      } catch { err.textContent = 'Sin conexión. Intenta de nuevo.'; btn.disabled = false; btn.textContent = 'Enviar mi pedido por WhatsApp'; }
+    });
+    try { const p = new URLSearchParams(location.search); ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ref'].forEach((k) => p.get(k) && sessionStorage.setItem(k, p.get(k)!)); } catch {}
+    // ---- Pedido abierto: el formulario también se conserva hasta cerrar el pedido ----
+    const KF = 'pzs_form_v1';
+    const CAMPOS = ['condicion', 'nombre', 'contacto', 'whatsapp', 'ciudad', 'ciudad_otra', 'tipo_negocio', 'ag_nombre', 'ag_ruc', 'ag_contacto', 'observaciones'];
+    function limpiarForm() { try { localStorage.removeItem(KF); localStorage.removeItem('pzs_lista_inicio'); } catch {} f.reset(); $('#otra').hidden = true; }
+    function restaurarForm() {
+      try {
+        const d = JSON.parse(localStorage.getItem(KF) || 'null'); if (!d || typeof d !== 'object') return;
+        for (const k of CAMPOS) { const el = f.elements.namedItem(k) as HTMLInputElement | null; if (el && typeof d[k] === 'string' && !el.value) el.value = d[k]; }
+        $('#otra').hidden = (f.elements.namedItem('ciudad') as HTMLSelectElement).value !== 'Otra';
+      } catch {}
+    }
+    const guardarForm = () => { try { const d: Record<string, string> = {}; for (const k of CAMPOS) d[k] = String((f.elements.namedItem(k) as HTMLInputElement | null)?.value || ''); localStorage.setItem(KF, JSON.stringify(d)); } catch {} };
+    f.addEventListener('input', guardarForm); f.addEventListener('change', guardarForm); dat.addEventListener('input', guardarForm); dat.addEventListener('change', guardarForm);
+    agIn().addEventListener('input', autoDatos); agIn().addEventListener('change', autoDatos); agcIn().addEventListener('input', () => { agcIn().dataset.auto = ''; });
+    $('#cerrarped').addEventListener('click', () => { document.getElementById('form')!.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => (document.getElementById('form') as HTMLFormElement).requestSubmit(), 400); });
+    $('#nuevoped').addEventListener('click', () => {
+      if (!confirm((ID && ID.c ? '¿Descartar este pedido sin guardarlo?' : '¿Empezar un pedido nuevo?')+"\n\nSe descartará el pedido abierto (productos y datos del formulario) que aún no cerraste.")) return;
+      vaciar(); limpiarForm(); pintar(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    if (ID) entrar();
+  </script>
+</Base>

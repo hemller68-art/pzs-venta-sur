@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import { getNegocio, getCuentas } from '../data/content';
+const n = await getNegocio();
+const cuentas = await getCuentas();
+---
+<Base title={`Cómo pagar | ${n.nombre}`} description="Cuentas para depósito o transferencia. Paga solo después de recibir tu cotización.">
+  <section>
+    <div class="wrap" style="max-width:760px">
+      <h1 style="font-size:clamp(2rem,6vw,3.2rem)">Cómo pagar</h1>
+      <p class="aviso" style="margin-top:1rem">{n.pago_texto}</p>
+      <div class="lista-v">
+        {cuentas.length ? cuentas.map((c) => (
+          <div class="cuenta glass">
+            <strong>{c.banco} · {c.etiqueta}</strong>
+            {c.titular && <span class="mut">Titular: {c.titular}</span>}
+            {c.numero && <div class="num"><div><span class="et">Número de cuenta</span>{c.numero}</div><button class="copiar" type="button" data-copy={c.numero}>Copiar</button></div>}
+            {c.cci && <div class="num"><div><span class="et">CCI</span>{c.cci}</div><button class="copiar" type="button" data-copy={c.cci}>Copiar</button></div>}
+            {c.codigo_agente && <div class="num"><div><span class="et">Código de agente</span>{c.codigo_agente}</div><button class="copiar" type="button" data-copy={c.codigo_agente}>Copiar</button></div>}
+          </div>
+        )) : <p class="mut vacio glass">Te enviamos las cuentas junto con tu cotización por WhatsApp.</p>}
+      </div>
+    </div>
+  </section>
+  <script>
+    document.addEventListener('click', async (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLElement>('[data-copy]'); if (!b) return;
+      const t = b.dataset.copy!;
+      try { await navigator.clipboard.writeText(t); (window as any).pzsToast?.('Copiado'); b.textContent = 'Copiado'; setTimeout(() => (b.textContent = 'Copiar'), 1800); }
+      catch { (window as any).pzsToast?.('Selecciona y copia el número manualmente.'); }
+    });
+  </script>
+</Base>

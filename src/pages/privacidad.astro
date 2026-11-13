@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { getNegocio } from '../data/content';
+const n = await getNegocio();
+---
+<Base title={`Política de privacidad | ${n.nombre}`} description="Cómo usamos los datos que nos envías al pedir una cotización.">
+  <section><div class="wrap" style="max-width:720px">
+    <h1 style="font-size:clamp(2rem,6vw,3rem)">Política de privacidad</h1>
+    <p class="mut" style="margin-top:.4rem">Última actualización: noviembre de 2026</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">Responsable del tratamiento</h2>
+    <p style="margin-top:.5rem">{n.legal_razon}{n.legal_ruc && ` (RUC ${n.legal_ruc})`}{n.legal_direccion && `, domicilio en ${n.legal_direccion}`}, es la responsable del tratamiento de los datos que recopila este sitio, conforme a la Ley N.° 29733, Ley de Protección de Datos Personales. Contacto: {n.legal_email || n.telefono}.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">Qué datos recopilamos y para qué</h2>
+    <p style="margin-top:.5rem">Al pedir una cotización recopilamos tu RUC o DNI, razón social o nombre, persona de contacto, WhatsApp, ciudad, tipo de negocio, datos de tu agencia de envío (si los indicas) y los productos de tu lista. Al registrar un reclamo, además, tu domicilio, correo y el detalle del reclamo. Usamos estos datos para cotizarte, atender tus pedidos y reclamos, contactarte por WhatsApp o correo y mejorar nuestro servicio comercial.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">Con quién los compartimos</h2>
+    <p style="margin-top:.5rem">No vendemos tus datos. Los compartimos con {n.prov_razon}, que fabrica y factura los productos, para atender tu pedido. También intervienen proveedores técnicos que alojan la web y su base de datos; estos servicios pueden operar con servidores ubicados fuera del Perú, con medidas de seguridad adecuadas. Si ingresas con tu clave de cliente, solo ves los precios de tu lista.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">Conservación</h2>
+    <p style="margin-top:.5rem">Conservamos tus datos mientras mantengamos una relación comercial contigo o sea necesario para atender reclamos y obligaciones legales. Cuando ya no sean necesarios, los eliminamos o los anonimizamos.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">Cookies y medición de anuncios</h2>
+    <p style="margin-top:.5rem">Esta web puede usar herramientas de medición de visitas y de campañas publicitarias de Meta (Facebook e Instagram), TikTok y Google Analytics, que pueden usar cookies. Puedes desactivarlas en la configuración de tu navegador o en los ajustes de anuncios de cada plataforma.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">Tus derechos</h2>
+    <p style="margin-top:.5rem">Puedes solicitar el acceso, la rectificación, la cancelación y la oposición al tratamiento de tus datos, así como retirar tu consentimiento, escribiéndonos por WhatsApp al {n.telefono}{n.legal_email && ` o al correo ${n.legal_email}`}. Si consideras que no atendimos tu solicitud, puedes acudir a la Autoridad Nacional de Protección de Datos Personales.</p>
+  </div></section>
+</Base>

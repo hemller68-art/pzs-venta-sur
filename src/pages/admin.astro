@@ -1,0 +1,52 @@
+---
+export const prerender = false;
+---
+<!doctype html>
+<html lang="es-PE">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Administrador | PROLIMSO Zona Sur</title>
+  <link rel="icon" href="/favicon.png" />
+  <style is:global>
+    :root{--b:#14308f;--g:#ffc727;--bg:#f3f5fb;--tx:#1b2140;--mu:#5d6585;--ln:#d9deee}
+    *{box-sizing:border-box;margin:0}
+    body{font:16px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx)}
+    header{background:var(--b);color:#fff;padding:.7rem 1rem;display:flex;gap:1rem;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+    header b{font-size:1.05rem}
+    nav{display:flex;gap:.3rem;flex-wrap:wrap;padding:.6rem 1rem;background:#fff;border-bottom:1px solid var(--ln);position:sticky;top:48px;z-index:4}
+    nav button{border:1px solid var(--ln);background:#fff;border-radius:99px;padding:.45rem .9rem;font:inherit;cursor:pointer}
+    nav button[aria-current=true]{background:var(--b);color:#fff;border-color:var(--b)}
+    main{max-width:1100px;margin:0 auto;padding:1rem}
+    h2{font-size:1.25rem;margin-bottom:.4rem}
+    .hint{color:var(--mu);margin-bottom:.8rem;font-size:.9rem}
+    .card{background:#fff;border:1px solid var(--ln);border-radius:12px;padding:.9rem;margin-bottom:.7rem}
+    details.card>summary{cursor:pointer;font-weight:600;display:flex;gap:.6rem;align-items:center;justify-content:space-between}
+    .grid{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));margin-top:.7rem}
+    .grid .full{grid-column:1/-1}
+    label{display:grid;gap:.2rem;font-size:.9rem;font-weight:600;color:var(--mu)}
+    input,select,textarea{font:inherit;font-size:16px;padding:.5rem .6rem;border:1px solid #b9c0da;border-radius:8px;width:100%;background:#fff;color:var(--tx)}
+    input[type=checkbox]{width:auto}
+    textarea{min-height:80px}
+    button.b{font:inherit;font-weight:600;border:0;border-radius:8px;padding:.55rem 1rem;background:var(--b);color:#fff;cursor:pointer}
+    button.b.g{background:var(--g);color:#2a1700}button.b.r{background:#fff;color:#b3261e;border:1px solid #e3b4b0}button.b.s{background:#fff;color:var(--b);border:1px solid var(--b)}
+    button.b:disabled{opacity:.5}
+    .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:.7rem}
+    .bd{display:inline-block;padding:.1rem .55rem;border-radius:99px;font-size:.75rem;font-weight:700;background:#e8ebf7}
+    .bd.A{background:#c9f2d6;color:#0b5a28}.bd.B{background:#fff0c2;color:#7a5600}.bd.C{background:#e8ebf7}
+    .login{max-width:360px;margin:12vh auto;display:grid;gap:.7rem}
+    #msg{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);background:#111;color:#fff;padding:.6rem 1rem;border-radius:10px;opacity:0;transition:.3s;z-index:20;max-width:90vw}
+    #msg.on{opacity:1}
+    table{width:100%;border-collapse:collapse;font-size:.85rem}
+    th,td{border-bottom:1px solid var(--ln);padding:.25rem;text-align:left}
+    td input{padding:.3rem .4rem}
+    .scroll{overflow:auto;max-height:70vh}
+    img.th{height:56px;border-radius:8px;border:1px solid var(--ln);background:#f3f3f3}
+    pre{white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <div id="app"></div><div id="msg" role="status"></div>
+  <script>import '../admin/panel';</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { getNegocio, getProductos } from '../../data/content';
+const n = await getNegocio();
+const productos = await getProductos();
+const p = productos.find((x) => x.slug === Astro.params.slug);
+if (!p) return new Response(null, { status: 404 });
+const rel = productos.filter((x) => x.categoria_id === p.categoria_id && x.slug !== p.slug).slice(0, 4);
+const ld = { '@context': 'https://schema.org', '@type': 'Product', name: p.nombre, description: p.descripcion || p.nombre, image: p.foto_url ? new URL(p.foto_url, Astro.site).href : undefined, brand: { '@type': 'Brand', name: 'PROLIMSO' }, sku: (p.codigos || [])[0] || undefined };
+---
+<Base title={`${p.nombre} | ${n.nombre}`} description={p.descripcion || `${p.nombre}. Pide tu cotización por WhatsApp.`} image={p.foto_url || undefined} jsonLd={ld}>
+  <section>
+    <div class="wrap">
+      <p class="mut"><a href="/catalogo">← Catálogo</a></p>
+      <h1 style="font-size:clamp(2rem,6vw,3.2rem);margin:.6rem 0 1rem">{p.nombre}</h1>
+      <div style="display:grid;gap:1.2rem;max-width:560px">
+        <ProductCard p={p} />
+        {p.descripcion && <p>{p.descripcion}</p>}
+        {p.codigos?.length > 0 && <p class="mut">Códigos: {p.codigos.join(', ')}</p>}
+        <p class="aviso">{n.aviso_minimo}</p>
+      </div>
+      {rel.length > 0 && <><h2 style="margin-top:2.4rem">También te puede interesar</h2><div class="grid">{rel.map((x) => <ProductCard p={x} />)}</div></>}
+    </div>
+  </section>
+</Base>

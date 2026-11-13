@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import { getNegocio } from '../data/content';
+const n = await getNegocio();
+---
+<Base title={`Envío y reembolso | ${n.nombre}`} description="Cómo se entregan los pedidos, y cómo pedir cambios o devoluciones.">
+  <section><div class="wrap" style="max-width:760px">
+    <h1 style="font-size:clamp(2rem,6vw,3rem)">Política de envío y reembolso</h1>
+    <p class="mut" style="margin-top:.4rem">Última actualización: octubre de 2026</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">Envíos</h2>
+    <p style="margin-top:.5rem">Atendemos negocios de la zona sur del Perú (Arequipa, Cusco, Puno, Juliaca, Tacna, Moquegua, Ilo, Desaguadero y alrededores). El despacho se coordina por WhatsApp después de confirmar el pago, y puede hacerse por la agencia de transporte que indiques. El plazo de entrega se confirma en tu cotización y depende de la disponibilidad y de la agencia.</p>
+    <p style="margin-top:.8rem">Al recibir tu pedido, revisa que los bultos lleguen cerrados y en buen estado, y avísanos por WhatsApp el mismo día si notas algún problema.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">Cambios y devoluciones</h2>
+    <p style="margin-top:.5rem">Aceptamos cambios por productos con defecto de fabricación o por error en el despacho, siempre que nos escribas por WhatsApp con fotos del producto y de la etiqueta del empaque en un plazo máximo de siete (7) días calendario desde la recepción, y el producto esté sin uso y en su empaque original.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">Reembolsos</h2>
+    <p style="margin-top:.5rem">Si el cambio no es posible, {n.prov_razon} devolverá el importe pagado por los productos con problema, mediante transferencia a una cuenta a nombre del cliente. Los costos de transporte por devoluciones sin falla del producto corren por cuenta del cliente.</p>
+    <h2 style="font-size:1.3rem;margin-top:1.4rem">Reclamos</h2>
+    <p style="margin-top:.5rem">Si no estás conforme, regístralo en el <a href="/libro-de-reclamaciones" style="text-decoration:underline">Libro de Reclamaciones</a>.</p>
+  </div></section>
+</Base>

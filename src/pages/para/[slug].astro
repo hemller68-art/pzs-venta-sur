@@ -1,0 +1,20 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { getNegocio, getSegmentos, getProductos } from '../../data/content';
+const n = await getNegocio();
+const s = (await getSegmentos()).find((x) => x.slug === Astro.params.slug);
+if (!s) return new Response(null, { status: 404 });
+const productos = (await getProductos()).slice(0, 8);
+---
+<Base title={`${s.titulo} | ${n.nombre}`} description={s.texto}>
+  <section>
+    <div class="wrap">
+      <h1 style="font-size:clamp(2rem,6vw,3.4rem)">{s.titulo}</h1>
+      <p style="margin-top:1rem;max-width:56ch">{s.texto}</p>
+      <p class="aviso" style="margin-top:1rem">{n.aviso_minimo}</p>
+      <div class="grid">{productos.map((p) => <ProductCard p={p} />)}</div>
+      <p style="margin-top:1.4rem"><a class="btn btn-gold" href="/catalogo">Ver catálogo completo</a></p>
+    </div>
+  </section>
+</Base>

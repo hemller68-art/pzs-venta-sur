@@ -1,0 +1,24 @@
+{
+  "name": "prolimso-zona-sur",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "start": "HOST=0.0.0.0 node ./dist/server/entry.mjs"
+  },
+  "dependencies": {
+    "@astrojs/node": "^11.1.6",
+    "@fontsource-variable/outfit": "^5.2.8",
+    "@fontsource/titillium-web": "^5.2.7",
+    "@supabase/supabase-js": "^2.117.2",
+    "astro": "^7.3.5",
+    "read-excel-file": "^5.8.8",
+    "write-excel-file": "^4.1.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

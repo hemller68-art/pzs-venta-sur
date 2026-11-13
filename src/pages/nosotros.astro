@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { getNegocio } from '../data/content';
+const n = await getNegocio();
+const faq = [
+  ['¿Qué es PROLIMSO Zona Sur?', `Es el canal de venta de PROLIMSO para la zona sur del Perú. PROLIMSO es un fabricante peruano de productos plásticos de limpieza y hogar; esta web la opera ${n.legal_razon} como representante comercial.`],
+  ['¿A quiénes venden?', 'A ferreterías, distribuidores, negocios de limpieza y negocios de plásticos de Arequipa, Cusco, Puno y Desaguadero. Se vende por empaque cerrado.'],
+  ['¿Cómo pido una cotización?', 'Elige tus productos en el catálogo, arma tu lista en "Cotiza tu pedido" y te respondemos por WhatsApp con tu cotización.'],
+  ['¿Cómo pago mi pedido?', `Depositas solo después de recibir tu cotización, a las cuentas a nombre de ${n.prov_razon} publicadas en la página Cómo pagar, y nos envías la constancia por WhatsApp.`],
+  ['¿Dónde están y en qué horario atienden?', `${n.direccion ? 'Estamos en ' + n.direccion + '. ' : ''}${n.horario ? 'Atendemos ' + n.horario + '.' : ''}`],
+];
+const faqLd = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) };
+---
+<Base title={`Nosotros | ${n.nombre}`} description="PROLIMSO fabrica productos plásticos de limpieza y hogar en el Perú y atiende a negocios de la zona sur." jsonLd={faqLd}>
+  <section><div class="wrap" style="max-width:720px">
+    <h1 style="font-size:clamp(2rem,6vw,3.2rem)">Nosotros</h1>
+    <p style="margin-top:1rem">PROLIMSO es un fabricante peruano de productos plásticos para la limpieza, el hogar y la industria. Desde esta web atendemos a ferreterías, distribuidores, negocios de limpieza y negocios de plásticos de la zona sur del Perú.</p>
+    <p style="margin-top:1rem">Vendemos por empaque cerrado y cotizamos directamente por WhatsApp para darte la mejor atención según tu volumen de compra.</p>
+    <h2 style="font-size:1.4rem;margin-top:1.8rem">Preguntas frecuentes</h2>
+    {faq.map(([q, a]) => <><h3 style="font-size:1.05rem;margin-top:1rem">{q}</h3><p style="margin-top:.3rem">{a}</p></>)}
+    <p style="margin-top:1.4rem"><a class="btn btn-gold" href="/catalogo">Ver catálogo</a></p>
+  </div></section>
+</Base>

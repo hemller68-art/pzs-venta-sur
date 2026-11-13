@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { getNegocio } from '../data/content';
+const n = await getNegocio();
+---
+<Base title={`Contacto | ${n.nombre}`} description="Escríbenos por WhatsApp para cotizar tus productos.">
+  <section><div class="wrap" style="max-width:640px">
+    <h1 style="font-size:clamp(2rem,6vw,3.2rem)">Contacto</h1>
+    <div class="glass form" style="margin-top:1.2rem;display:grid;gap:.6rem">
+      <p><strong>WhatsApp:</strong> {n.telefono}</p>
+      {n.email && <p><strong>Correo:</strong> {n.email}</p>}
+      {n.direccion && <p><strong>Dirección:</strong> {n.direccion}</p>}
+      {n.horario && <p><strong>Horario:</strong> {n.horario}</p>}
+      <p style="margin-top:.6rem"><a class="btn btn-wa" href={`https://wa.me/${n.whatsapp}`} target="_blank" rel="noopener"><Icon name="wa" />Escribir por WhatsApp</a></p>
+    </div>
+  </div></section>
+</Base>
