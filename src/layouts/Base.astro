@@ -85,7 +85,7 @@ const musica = modo === 'campana' && negocio.musica_activa && negocio.musica_url
       <div class="legal">© {new Date().getFullYear()} {negocio.legal_razon || negocio.nombre}{negocio.legal_ruc && <> · RUC {negocio.legal_ruc}</>}{negocio.prov_razon && <> · Canal de venta de {negocio.prov_razon}</>}. Todos los derechos reservados. · <a href="/libro-de-reclamaciones">Libro de Reclamaciones</a> · <a href="/privacidad">Política de privacidad</a> · <a href="/admin" rel="nofollow">Administrador</a></div>
     </div>
   </footer>
-  <a class="wa" href={`https://wa.me/${negocio.whatsapp}?text=${encodeURIComponent('Hola, quisiera información sobre sus productos.')}`} target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><Icon name="wa" />WhatsApp</a>
+  <a class="wa" href={`https://wa.me/${negocio.whatsapp}?text=${encodeURIComponent('Hola, quisiera información sobre sus productos.')}`} target="_blank" rel="noopener" aria-label="Escribir por WhatsApp"><Icon name="wa" /><span class="wat">WhatsApp</span></a>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script>
     const $ = (s: string) => document.querySelector(s);
