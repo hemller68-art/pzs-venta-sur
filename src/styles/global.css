@@ -123,7 +123,7 @@ input.buscar{font:inherit;font-size:1rem;min-height:46px;padding:.7rem 1rem;bord
 @media(min-width:760px){.reels .media.dual{flex-basis:min(400px,44vw)}.reels .media:not(.dual){flex-basis:220px}}
 .rnav{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.5);background:rgba(20,8,50,.7);backdrop-filter:blur(8px);color:#fff;font-size:1.6rem;line-height:1;cursor:pointer}
 .rnav.prev{left:-8px}.rnav.next{right:-8px}
-footer .credit a{flex:0 0 72px;width:72px;height:72px;display:block}footer .credit img{width:72px;height:72px;min-width:72px;border-radius:50%;object-fit:cover;display:block}
+footer .credit a{flex:0 0 50px;width:50px;height:50px;display:block}footer .credit img{width:50px;height:50px;min-width:50px;border-radius:50%;object-fit:cover;display:block}
 .media{border-radius:var(--r-card);overflow:hidden;position:relative;border:1px solid rgba(255,255,255,.22)}
 .media .v{aspect-ratio:9/16}
 .media .h{aspect-ratio:16/9;display:none}
