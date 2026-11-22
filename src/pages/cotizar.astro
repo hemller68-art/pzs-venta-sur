@@ -62,7 +62,7 @@ const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f:
         <script type="application/json" id="ctas" set:html={JSON.stringify(cuentas).replace(/</g, '\\u003c')}></script>
 
         <h2 style="font-size:1.4rem;margin:1.6rem 0 .6rem">4. Mi pedido</h2>
-        <div id="abierto" class="glass" hidden style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.7rem 1rem;margin-bottom:.8rem;border:1px solid var(--gold)"><span id="abtxt" style="font-weight:700"></span><span style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-gold btn-s" id="cerrarped" type="button" hidden>Cerrar pedido</button><button class="btn btn-g btn-s" id="nuevoped" type="button">Nuevo pedido</button></span></div>
+        <div id="abierto" class="glass" hidden style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;padding:.7rem 1rem;margin-bottom:.8rem;border:1px solid var(--gold)"><span id="abtxt" style="font-weight:700"></span></div>
         <div id="lista" class="lista-v" aria-live="polite"></div>
         <div id="print" class="print-only" aria-hidden="true"></div>
         <div id="vacio" class="glass vacio"><p>Aún no agregaste productos. Búscalos arriba o entra al <a href="/catalogo" style="text-decoration:underline">catálogo</a>.</p></div>
@@ -80,6 +80,7 @@ const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f:
           </div>
           <p class="err" id="err" role="alert"></p>
           <button class="btn btn-wa" id="enviar" type="submit" style="width:100%;margin-top:.4rem">Enviar mi pedido por WhatsApp</button>
+          <button class="btn btn-g btn-s" id="nuevoped" type="button" style="width:100%;margin-top:.7rem">Nuevo pedido</button>
         </form>
       </div>
     </div>
@@ -167,7 +168,7 @@ const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f:
       $('#lbl-ag').textContent = car ? 'Agencia de transportes (obligatorio)' : 'Nombre de la agencia';
       $('#lbl-agc').textContent = car ? 'Datos del transportista (nombre, teléfono, destino)' : 'Contacto de la agencia (teléfono o persona)';
       $('#enviar').textContent = car ? 'Cerrar pedido' : 'Enviar mi pedido por WhatsApp';
-      $('#cerrarped').hidden = !car; $('#nuevoped').textContent = car ? 'Descartar pedido' : 'Nuevo pedido';
+      $('#nuevoped').textContent = car ? 'Descartar pedido' : 'Nuevo pedido';
       pintar(); restaurarForm();
       if (car && ID.ult) {
         const u = ID.ult, setv = (k: string, v: string) => { const e = f.elements.namedItem(k) as HTMLInputElement | null; if (e && v && !e.value) e.value = v; };
@@ -507,7 +508,6 @@ const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f:
     const guardarForm = () => { try { const d: Record<string, string> = {}; for (const k of CAMPOS) d[k] = String((f.elements.namedItem(k) as HTMLInputElement | null)?.value || ''); localStorage.setItem(KF, JSON.stringify(d)); } catch {} };
     f.addEventListener('input', guardarForm); f.addEventListener('change', guardarForm); dat.addEventListener('input', guardarForm); dat.addEventListener('change', guardarForm);
     agIn().addEventListener('input', autoDatos); agIn().addEventListener('change', autoDatos); agcIn().addEventListener('input', () => { agcIn().dataset.auto = ''; });
-    $('#cerrarped').addEventListener('click', () => { document.getElementById('form')!.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => (document.getElementById('form') as HTMLFormElement).requestSubmit(), 400); });
     $('#nuevoped').addEventListener('click', () => {
       if (!confirm((ID && ID.c ? '¿Descartar este pedido sin guardarlo?' : '¿Empezar un pedido nuevo?')+"\n\nSe descartará el pedido abierto (productos y datos del formulario) que aún no cerraste.")) return;
       vaciar(); limpiarForm(); pintar(); window.scrollTo({ top: 0, behavior: 'smooth' });
