@@ -205,14 +205,20 @@ footer .legal{margin-top:.9rem;font-size:.8rem;opacity:.7}
 .print-only{display:none}
 @media print{
   body{background:#fff!important;color:#000!important;padding:0}
-  header.top,footer,.bar,.wa,.toast,.no-print,#lista,#form,#vacio,#pdfwrap,.aviso,h1.scr,#gate,#paso>.idok,#paso>.buscador,#paso>#edit,#paso>h2,#abierto,#tot,#ptot,#pnota{display:none!important}
+  header.top,footer,.bar,.wa,.toast,.no-print,#lista,#form,#vacio,#pdfwrap,.aviso,h1.scr,#gate,#paso>.idok,#paso>.buscador,#paso>#edit,#paso>h2,#abierto,#tot,#ptot,#pnota,#datos{display:none!important}
   main h1{display:none}
-  .print-only{display:block!important;color:#000}
+  .print-only{display:block!important;color:#000;text-align:left!important}
   .print-only h1{display:block!important;font-size:20pt;margin-bottom:.4rem}
   .print-only p{margin:.4rem 0;font-size:11pt}
   .print-only .cli-print{font-size:13pt;font-weight:800;background:#fff2b3!important;border:1.5px solid #c9a100;border-radius:4px;padding:.4rem .6rem;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .print-only table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:11pt}
   .print-only th,.print-only td{border:1px solid #444;padding:.35rem .5rem;text-align:left}
+  .print-only table{font-size:10pt}
+  .print-only th,.print-only td{padding:.3rem .4rem}
+  .print-only th:nth-child(n+3),.print-only td:nth-child(n+3){text-align:right;white-space:nowrap}
+  .print-only th{white-space:nowrap}
+  .print-only tr{break-inside:avoid}
+  .print-only thead{display:table-header-group}
 }
 .media:not(.dual) .h{display:block}
 
