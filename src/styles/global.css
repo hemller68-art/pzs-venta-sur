@@ -205,7 +205,7 @@ footer .legal{margin-top:.9rem;font-size:.8rem;opacity:.7}
 .print-only{display:none}
 @media print{
   body{background:#fff!important;color:#000!important;padding:0}
-  header.top,footer,.bar,.wa,.toast,.no-print,#lista,#form,#vacio,#pdfwrap,.aviso,h1.scr,#gate,#paso>.idok,#paso>.buscador,#paso>#edit,#paso>h2,#abierto,#tot,#ptot,#pnota,#datos{display:none!important}
+  header.top,footer,.bar,.wa,.toast,.no-print,#lista,#form,#vacio,#pdfwrap,.aviso,h1.scr,#gate,#paso>.idok,#paso>.buscador,#paso>#edit,#paso>h2,#abierto,#tot,#ptot,#pnota,#datos,#ultimo{display:none!important}
   main h1{display:none}
   .print-only{display:block!important;color:#000;text-align:left!important}
   .print-only h1{display:block!important;font-size:20pt;margin-bottom:.4rem}
