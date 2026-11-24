@@ -21,13 +21,13 @@ const n = await getNegocio();
   </section>
   <script>
     try { const w = window as any; if (w.fbq) w.fbq('track', 'Lead'); if (w.ttq) w.ttq.track('SubmitForm'); if (w.gtag) w.gtag('event', 'generate_lead'); } catch {}
-    try { if (sessionStorage.getItem('pzs_cerrado')) { sessionStorage.removeItem('pzs_cerrado'); document.getElementById('gwa')!.hidden = true; document.getElementById('gtxt')!.textContent = 'Tu pedido quedó cerrado y registrado. Tu asesor lo atenderá y te contactará.'; } } catch {}
+    try { if (sessionStorage.getItem('pzs_cerrado')) { sessionStorage.removeItem('pzs_cerrado'); document.getElementById('gwa')!.hidden = true; document.getElementById('gtxt')!.textContent = sessionStorage.getItem('pzs_tipo') === 'Cotización' ? 'Tu cotización quedó registrada. Tu asesor la revisará y te contactará.' : 'Tu pedido quedó cerrado y registrado. Tu asesor lo atenderá y te contactará.'; } } catch {}
     try {
       const num = sessionStorage.getItem('pzs_num'), html = sessionStorage.getItem('pzs_pdfhtml');
       if (num && html) {
-        document.getElementById('gnum')!.textContent = 'Pedido N° ' + num; document.getElementById('gnum')!.hidden = false;
+        const tt = sessionStorage.getItem('pzs_tipo') || 'Pedido'; document.getElementById('gnum')!.textContent = tt + ' N° ' + num; document.getElementById('gpdf')!.textContent = 'Descargar mi ' + tt.toLowerCase() + ' (PDF)'; document.getElementById('gnum')!.hidden = false;
         document.getElementById('gprint')!.innerHTML = html; document.getElementById('gpdfw')!.hidden = false;
-        document.getElementById('gpdf')!.addEventListener('click', () => { const a = document.title; document.title = 'Pedido ' + num + ' - PROLIMSO Zona Sur'; const v = () => { document.title = a; window.removeEventListener('afterprint', v); }; window.addEventListener('afterprint', v); window.print(); });
+        document.getElementById('gpdf')!.addEventListener('click', () => { const a = document.title; document.title = tt + ' ' + num + ' - PROLIMSO Zona Sur'; const v = () => { document.title = a; window.removeEventListener('afterprint', v); }; window.addEventListener('afterprint', v); window.print(); });
       }
     } catch {}
     try {

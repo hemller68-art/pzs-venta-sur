@@ -75,6 +75,7 @@ const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f:
         <form id="form" class="glass form" novalidate hidden>
           <h2 id="h4" style="font-size:1.4rem;margin-bottom:1rem">5. Enviar pedido</h2>
           <div class="f dos">
+            <fieldset class="full" id="tipodoc" data-c hidden style="border:0;padding:0;margin:0"><legend style="font-weight:700;margin-bottom:.4rem">Esto es una… (obligatorio)</legend><div style="display:flex;gap:1.4rem;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:.5rem;font-weight:700"><input type="radio" name="tipo_doc" value="cotizacion" style="width:auto;margin:0" /> Cotización</label><label style="display:flex;align-items:center;gap:.5rem;font-weight:700"><input type="radio" name="tipo_doc" value="pedido" style="width:auto;margin:0" /> Pedido</label></div></fieldset>
             <label class="full">Observaciones (opcional) <textarea name="observaciones" maxlength="500"></textarea></label>
             <input class="hp" name="web" tabindex="-1" autocomplete="off" aria-hidden="true" />
           </div>
@@ -411,7 +412,9 @@ const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f:
 
     function armarImpresion(numero = '') {
       const l = leer(), t = $('#print'), tt = totales();
-      const h1 = el('h1', { textContent: 'PROLIMSO Zona Sur · ' + (numero ? 'Pedido N° ' + numero : 'Lista de pedido') });
+      const tp0 = String(new FormData($<HTMLFormElement>('#form')).get('tipo_doc') || '');
+      const lab = (ID && ID.c) ? (tp0 === 'cotizacion' ? 'Cotización' : tp0 === 'pedido' ? 'Pedido' : '') : 'Cotización';
+      const h1 = el('h1', { textContent: 'PROLIMSO Zona Sur · ' + (numero ? (lab || 'Pedido') + ' N° ' + numero : (lab ? 'Lista de ' + lab.toLowerCase() : 'Lista de pedido')) });
       const f = el('p', { textContent: 'Fecha: ' + new Date().toLocaleDateString('es-PE') });
       const fv = new FormData($<HTMLFormElement>('#form')), g = (k: string) => String(fv.get(k) || '').trim();
       const nomCli = (g('nombre') || (ID && ID.nom) || '').trim();
@@ -445,7 +448,8 @@ const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f:
       const limpio = cliente.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
       const d = new Date(), p2 = (v: number) => String(v).padStart(2, '0');
       const anterior = document.title;
-      document.title = `Pedido ${limpio} - PROLIMSO Zona Sur - ${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+      const tpd = String(fv.get('tipo_doc') || '');
+      document.title = `${(ID && ID.c) ? (tpd === 'cotizacion' ? 'Cotización' : 'Pedido') : 'Cotización'} ${limpio} - PROLIMSO Zona Sur - ${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
       const volver = () => { document.title = anterior; window.removeEventListener('afterprint', volver); };
       window.addEventListener('afterprint', volver);
       window.print();
@@ -476,18 +480,20 @@ const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f:
       const agr = String(v.get('ag_ruc') || '').replace(/\D/g, '');
       if (agr && !rucValido(agr)) return mal('ag_ruc', 'El RUC de la agencia no es válido (11 dígitos).');
       if (!car && !v.get('consent')) return mal('consent', 'Debes aceptar el uso de tus datos.');
+      if (car && !v.get('tipo_doc')) { err.textContent = 'Elige si es Cotización o Pedido.'; document.getElementById('tipodoc')!.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+      const tipoTxt = car ? (v.get('tipo_doc') === 'cotizacion' ? 'Cotización' : 'Pedido') : 'Cotización';
       const btn = $<HTMLButtonElement>('#enviar'); btn.disabled = true; btn.textContent = 'Enviando…';
       const p = new URLSearchParams(location.search);
       const origen = Object.fromEntries(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ref'].map((k) => [k, p.get(k) || sessionStorage.getItem(k) || '']));
       try {
         const r = await fetch('/api/pedido', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({
           doc_tipo: ID.t, doc_num: ID.n, clave: ID.c || '', nombre: v.get('nombre'), contacto: v.get('contacto'), whatsapp: v.get('whatsapp'), ciudad: v.get('ciudad'), ciudad_otra: v.get('ciudad_otra'),
-          tipo_negocio: v.get('tipo_negocio'), condicion: v.get('condicion'), observaciones: v.get('observaciones'), ag_nombre: v.get('ag_nombre'), ag_ruc: agr, ag_contacto: v.get('ag_contacto'), consent: true, web: v.get('web'), t: t0,
+          tipo_negocio: v.get('tipo_negocio'), condicion: v.get('condicion'), observaciones: v.get('observaciones'), tipo_doc: v.get('tipo_doc') || '', ag_nombre: v.get('ag_nombre'), ag_ruc: agr, ag_contacto: v.get('ag_contacto'), consent: true, web: v.get('web'), t: t0,
           items: leer().map((x) => ({ slug: x.slug, cols: Object.entries(x.cols).map(([color, qty]) => ({ color, qty })) })), origen }) });
         const d = await r.json();
         if (!r.ok) { if (d.reautenticar) { ID = null; try { sessionStorage.removeItem(KID); } catch {} $('#paso').hidden = true; $('#gate').hidden = false; $('#gerr').textContent = d.error; return; } const ci = d.campo ? (f.elements.namedItem(d.campo) as HTMLElement | null) : null; ci?.setAttribute('aria-invalid', 'true'); if (ci && dat.contains(ci)) { errd.textContent = d.error || 'No se pudo enviar.'; ci.focus(); } else err.textContent = d.error || 'No se pudo enviar.'; btn.disabled = false; btn.textContent = 'Enviar mi pedido por WhatsApp'; return; }
         try {
-          sessionStorage.setItem('pzs_wa', d.wa || ''); if (d.cerrado) sessionStorage.setItem('pzs_cerrado', '1');
+          sessionStorage.setItem('pzs_wa', d.wa || ''); sessionStorage.setItem('pzs_tipo', tipoTxt); if (d.cerrado) sessionStorage.setItem('pzs_cerrado', '1');
           if (d.numero) { armarImpresion(d.numero); sessionStorage.setItem('pzs_num', d.numero); sessionStorage.setItem('pzs_pdfhtml', $('#print').innerHTML); }
         } catch {}
         vaciar(); limpiarForm(); location.href = '/gracias';
@@ -496,7 +502,7 @@ const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f:
     try { const p = new URLSearchParams(location.search); ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ref'].forEach((k) => p.get(k) && sessionStorage.setItem(k, p.get(k)!)); } catch {}
     // ---- Pedido abierto: el formulario también se conserva hasta cerrar el pedido ----
     const KF = 'pzs_form_v1';
-    const CAMPOS = ['condicion', 'nombre', 'contacto', 'whatsapp', 'ciudad', 'ciudad_otra', 'tipo_negocio', 'ag_nombre', 'ag_ruc', 'ag_contacto', 'observaciones'];
+    const CAMPOS = ['condicion', 'nombre', 'contacto', 'whatsapp', 'ciudad', 'ciudad_otra', 'tipo_negocio', 'ag_nombre', 'ag_ruc', 'ag_contacto', 'observaciones', 'tipo_doc'];
     function limpiarForm() { try { localStorage.removeItem(KF); localStorage.removeItem('pzs_lista_inicio'); } catch {} f.reset(); $('#otra').hidden = true; }
     function restaurarForm() {
       try {
@@ -506,6 +512,7 @@ const buscable = (await getProductos()).map((p) => ({ s: p.slug, n: p.nombre, f:
       } catch {}
     }
     const guardarForm = () => { try { const d: Record<string, string> = {}; for (const k of CAMPOS) d[k] = String((f.elements.namedItem(k) as HTMLInputElement | null)?.value || ''); localStorage.setItem(KF, JSON.stringify(d)); } catch {} };
+    f.addEventListener('change', (e) => { if ((e.target as HTMLInputElement).name === 'tipo_doc' && ID && ID.c) $('#enviar').textContent = (e.target as HTMLInputElement).value === 'cotizacion' ? 'Enviar cotización' : 'Confirmar pedido'; });
     f.addEventListener('input', guardarForm); f.addEventListener('change', guardarForm); dat.addEventListener('input', guardarForm); dat.addEventListener('change', guardarForm);
     agIn().addEventListener('input', autoDatos); agIn().addEventListener('change', autoDatos); agcIn().addEventListener('input', () => { agcIn().dataset.auto = ''; });
     $('#nuevoped').addEventListener('click', () => {

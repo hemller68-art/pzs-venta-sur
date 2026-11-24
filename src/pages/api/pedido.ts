@@ -40,13 +40,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     if (!acc.ok) return json({ error: acc.motivo === 'servicio' ? 'No pudimos verificar tu clave. Intenta de nuevo.' : 'Tu clave ya no es válida. Ingresa de nuevo.', reautenticar: acc.motivo !== 'servicio' }, acc.motivo === 'servicio' ? 503 : 401);
   }
   const cartera = !!acc?.ok;
-  let nombre = '', whatsapp = '', ciudad = '', tipoNeg = '', condicion = '';
+  let nombre = '', whatsapp = '', ciudad = '', tipoNeg = '', condicion = '', tipoDoc = 'cotizacion';
   if (cartera) {
     // Cliente activo: sus datos ya están registrados. Solo se pide agencia de transportes, datos del transportista, observaciones y condición de pago.
     nombre = limpio(acc!.nombre, 120) || doc;
     if (limpio(b.ag_nombre, 80).length < 2) return json({ error: 'Indica la agencia de transportes.', campo: 'ag_nombre' }, 422);
     condicion = limpio(b.condicion, 10);
     if (!['contado', 'factura', 'letra'].includes(condicion)) return json({ error: 'Elige la condición de pago.', campo: 'condicion' }, 422);
+    tipoDoc = limpio(b.tipo_doc, 12);
+    if (!['cotizacion', 'pedido'].includes(tipoDoc)) return json({ error: 'Elige si es Cotización o Pedido.', campo: 'tipo_doc' }, 422);
   } else {
     nombre = limpio(b.nombre, 120); if (nombre.length < 3) return json({ error: 'Ingresa tu razón social o nombre.', campo: 'nombre' }, 422);
     whatsapp = limpio(b.whatsapp, 20).replace(/\D/g, '').replace(/^51(?=9\d{8}$)/, '');
@@ -97,6 +99,8 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const montoTotal = Math.round(items.reduce((a: number, i: any) => a + (i.subtotal || 0), 0) * 100) / 100;
   const origen: Record<string, unknown> = Object.fromEntries(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'ref'].map((k) => [k, limpio(o[k], 80)]).filter(([, v]) => v));
   if (bonos.length) origen.bonos = bonos;
+  origen.tipo_doc = tipoDoc;
+  const etq = tipoDoc === 'pedido' ? 'Pedido' : 'Cotización';
   if (acc?.ok) { origen.cartera = true; origen.lista = acc.lista || ''; if (precios) origen.total = montoTotal; }
   // Condición de pago y descuento por contado (solo clientes con descuento activado en el Panel; se calcula aquí, no en el navegador).
   let descuento = 0, descPct = 0;
@@ -113,15 +117,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const nro = typeof numero === 'string' ? numero : '';
 
   const lineas = items.map((i) => `• ${i.nombre}${i.color ? ` (${i.color})` : ''}: ${i.empaques} ${i.empaque}${i.empaques === 1 ? '' : 's'} (${i.unidades} unid.)${i.subtotal != null ? ` — S/ ${(i.precio_unidad ?? i.precio_empaque / (i.unidades / i.empaques || 1)).toFixed(2)} c/u · S/ ${i.precio_empaque.toFixed(2)} por empaque = S/ ${i.subtotal.toFixed(2)}` : ''}`);
-  const msg = [n.mensaje_whatsapp, nro && `Pedido N° ${nro}`, ...lineas, ...bonos.map((b) => `• BONIFICACIÓN: ${b.nombre} — ${b.uni} unid. (S/ 0.00)`), precios ? `TOTAL: S/ ${montoTotal.toFixed(2)} (sujeto a confirmación)` : acc?.ok ? 'Precios: por confirmar' : '', cartera ? `Condición de pago: ${({ contado: 'Contado', factura: 'Crédito con factura', letra: 'Crédito con letra' } as any)[condicion]}` : '', descuento ? `Descuento por contado (${descPct}%): − S/ ${descuento.toFixed(2)} · TOTAL A PAGAR: S/ ${(montoTotal - descuento).toFixed(2)}` : '', acc?.ok ? `Cliente de cartera${acc.lista ? ' · ' + acc.lista : ''}` : '', '', `${tipo}: ${doc}`, `${nombre}`, ciudad ? `Ciudad: ${ciudad}` : '', agencia && agencia.replace(/ \| /g, '\n'), obsCliente && `Obs.: ${obsCliente}`].filter((x) => x !== '' || true).filter((x) => x !== false && x !== undefined && x !== null).join('\n');
+  const msg = [n.mensaje_whatsapp, nro && `${etq} N° ${nro}`, ...lineas, ...bonos.map((b) => `• BONIFICACIÓN: ${b.nombre} — ${b.uni} unid. (S/ 0.00)`), precios ? `TOTAL: S/ ${montoTotal.toFixed(2)} (sujeto a confirmación)` : acc?.ok ? 'Precios: por confirmar' : '', cartera ? `Condición de pago: ${({ contado: 'Contado', factura: 'Crédito con factura', letra: 'Crédito con letra' } as any)[condicion]}` : '', descuento ? `Descuento por contado (${descPct}%): − S/ ${descuento.toFixed(2)} · TOTAL A PAGAR: S/ ${(montoTotal - descuento).toFixed(2)}` : '', acc?.ok ? `Cliente de cartera${acc.lista ? ' · ' + acc.lista : ''}` : '', '', `${tipo}: ${doc}`, `${nombre}`, ciudad ? `Ciudad: ${ciudad}` : '', agencia && agencia.replace(/ \| /g, '\n'), obsCliente && `Obs.: ${obsCliente}`].filter((x) => x !== '' || true).filter((x) => x !== false && x !== undefined && x !== null).join('\n');
   // Aviso por correo al negocio (opcional): solo si el servidor tiene RESEND_API_KEY y RECLAMOS_FROM configurados.
   try {
     const key = (import.meta as any).env?.RESEND_API_KEY || process.env.RESEND_API_KEY, from = (import.meta as any).env?.RECLAMOS_FROM || process.env.RECLAMOS_FROM, to = (import.meta as any).env?.RESEND_TO || process.env.RESEND_TO || n.email || n.legal_email;
     console.log('[aviso] clave:', !!key, '| remitente:', from || '(vacío)', '| destino:', to || '(vacío)');
     if (key && from && to) {
       const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
-      const html = `<h2>${cartera ? 'Pedido cerrado' : 'Nueva solicitud de cotización'} ${esc(nro)}: ${esc(nombre)}</h2><p>${esc(tipo)} ${esc(doc)}${cartera ? ' · cliente de cartera' : ''}</p><pre style="font-family:inherit">${esc(msg)}</pre>`;
-      const rr = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify({ from, to: [to], subject: `${cartera ? 'Pedido cerrado' : 'Nueva cotización'} · ${nombre}`, html }) });
+      const html = `<h2>${cartera ? (tipoDoc === 'pedido' ? 'PEDIDO cerrado' : 'COTIZACIÓN de cliente de cartera') : 'Nueva solicitud de cotización'} ${esc(nro)}: ${esc(nombre)}</h2><p>${esc(tipo)} ${esc(doc)}${cartera ? ' · cliente de cartera' : ''}</p><pre style="font-family:inherit">${esc(msg)}</pre>`;
+      const rr = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify({ from, to: [to], subject: `${cartera ? (tipoDoc === 'pedido' ? 'PEDIDO cerrado' : 'COTIZACIÓN cartera') : 'Nueva cotización'} · ${nombre}`, html }) });
       console.log('[aviso] Resend respondió', rr.status, (await rr.text()).slice(0, 300));
     }
   } catch (e) { console.error('aviso pedido', e); }
