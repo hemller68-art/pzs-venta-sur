@@ -30,11 +30,9 @@ const titulo = modo === 'campana' ? n.campana_titulo : n.normal_titulo;
 // Etiqueta pequeña sobre el título: editable en Panel > Negocio (si está vacía, usa el texto de siempre).
 const etiquetaHero = (modo === 'campana' ? (n as any).campana_etiqueta || 'Campaña navideña' : (n as any).normal_etiqueta || n.nombre) as string;
 // Portada editable (Panel > Medios > portada): video o imagen; si no hay nada, queda el video de siempre.
-// Interruptor: false = se usa siempre el video de /hero-video (como antes). Cambiar a true para usar lo subido en Panel > Medios > portada.
-const USAR_PORTADA_DEL_PANEL = false;
-const pVideoD = USAR_PORTADA_DEL_PANEL && esVideo(portada?.horizontal_url) ? portada!.horizontal_url : '';
-const pVideoM = USAR_PORTADA_DEL_PANEL && esVideo(portada?.vertical_url) ? portada!.vertical_url : '';
-const pImg = USAR_PORTADA_DEL_PANEL ? [portada?.horizontal_url, portada?.vertical_url].find((u) => u && !esVideo(u)) || '' : '';
+const pVideoD = esVideo(portada?.horizontal_url) ? portada!.horizontal_url : '';
+const pVideoM = esVideo(portada?.vertical_url) ? portada!.vertical_url : '';
+const pImg = [portada?.horizontal_url, portada?.vertical_url].find((u) => u && !esVideo(u)) || '';
 const texto = modo === 'campana' ? n.campana_texto : n.normal_texto;
 ---
 <Base title={`${n.nombre} | Productos de limpieza y plásticos para tu negocio`} description={texto}>
