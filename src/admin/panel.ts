@@ -161,7 +161,7 @@ function imprimir(titulo: string, cuerpo: HTMLElement) {
 }
 type Ext = { filas: any[]; total: number | null; faltan: number; cuentas: any[]; lista: string };
 function docPedido(p: any, texto?: string, ext?: Ext) {
-  const d = h('div', {}, h('h1', { textContent: 'PROLIMSO Zona Sur · ' + (texto ? 'Cotización' : 'Pedido') + (p.numero ? ' N° ' + p.numero : '') }),
+  const d = h('div', {}, h('h1', { textContent: 'PROLIMSO Zona Sur · ' + (texto || p.origen?.tipo_doc === 'cotizacion' ? 'Cotización' : 'Pedido') + (p.numero ? ' N° ' + p.numero : '') }),
     h('p', { textContent: `${new Date(p.created_at).toLocaleString('es-PE')} · ${p.doc_tipo} ${p.doc_num} · ${p.nombre}` }),
     h('p', { textContent: `${p.ciudad} · ${p.tipo_negocio} · WhatsApp ${p.whatsapp}${p.contacto ? ' · ' + p.contacto : ''}` }));
   if (texto) d.append(h('pre', { textContent: texto }));
@@ -259,7 +259,7 @@ P['Pedidos'] = async (r) => {
     const selLista = h('select', { style: 'width:auto' }, h('option', { value: '', textContent: 'Sin lista' }), ...(listas ?? []).map((l: any) => h('option', { value: String(l.id), textContent: l.nombre + (l.con_precios ? '' : ' (sin precios)') })));
     selLista.value = cl?.lista_id ? String(cl.lista_id) : '';
     const card = h('div', { class: 'card' },
-      h('div', { class: 'row', style: 'margin:0' }, h('span', { class: 'bd ' + p.clasificacion, textContent: 'Lead ' + p.clasificacion }), p.origen?.cartera ? h('span', { class: 'bd A', textContent: 'CARTERA' + (p.origen.lista ? ' · ' + p.origen.lista : '') + (p.origen.total ? ' · ' + money(Number(p.origen.total)) : '') }) : null, h('strong', { textContent: (p.numero ? p.numero + ' · ' : '') + p.nombre }),
+      h('div', { class: 'row', style: 'margin:0' }, h('span', { class: 'bd ' + p.clasificacion, textContent: 'Lead ' + p.clasificacion }), p.origen?.tipo_doc ? h('span', { class: 'bd ' + (p.origen.tipo_doc === 'pedido' ? 'A' : 'B'), textContent: p.origen.tipo_doc === 'pedido' ? 'PEDIDO' : 'COTIZACIÓN' }) : null, p.origen?.cartera ? h('span', { class: 'bd A', textContent: 'CARTERA' + (p.origen.lista ? ' · ' + p.origen.lista : '') + (p.origen.total ? ' · ' + money(Number(p.origen.total)) : '') }) : null, h('strong', { textContent: (p.numero ? p.numero + ' · ' : '') + p.nombre }),
         h('span', { class: 'hint', style: 'margin:0', textContent: new Date(p.created_at).toLocaleString('es-PE') }), est),
       h('p', { textContent: `${p.doc_tipo} ${p.doc_num} · ${p.ciudad} · ${p.tipo_negocio} · volumen ${p.volumen} · WhatsApp ${p.whatsapp}${p.contacto ? ' · ' + p.contacto : ''}` }),
       p.origen?.condicion ? h('p', { textContent: `Condición de pago: ${({ contado: 'Contado', factura: 'Crédito con factura', letra: 'Crédito con letra' } as any)[p.origen.condicion] || p.origen.condicion}${p.origen.descuento ? ` · Descuento contado ${p.origen.descuento_pct}%: − ${money(p.origen.descuento)} · A pagar ${money(p.origen.total_pagar)}` : ''}` }) : null,
