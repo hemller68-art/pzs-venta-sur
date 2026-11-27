@@ -10,7 +10,7 @@
 body[data-modo=campana]{--bg:#1a0b3d;--tx:#f6f1ff;--mu:#cbbfe6;--pri:#d9c8ff;--pri2:#160834;--deep:#2a1163;
   --bgimg:radial-gradient(60% 40% at 90% 4%,rgba(167,110,255,.55),transparent 70%),radial-gradient(55% 35% at 4% 38%,rgba(92,60,220,.5),transparent 70%),radial-gradient(60% 40% at 96% 74%,rgba(215,70,160,.28),transparent 70%),linear-gradient(180deg,#2a1163,#150731 70%);
   --velo-v:linear-gradient(180deg,rgba(92,48,200,.28) 0%,rgba(76,34,168,.55) 45%,rgba(54,18,130,.92) 78%);
-  --velo:linear-gradient(95deg,rgba(54,18,130,.94) 0%,rgba(76,34,168,.78) 52%,rgba(92,48,200,.5) 100%),radial-gradient(70% 90% at 90% 10%,rgba(190,140,255,.45),transparent 70%);
+  --velo:linear-gradient(95deg,rgba(54,18,130,.89) 0%,rgba(76,34,168,.73) 52%,rgba(92,48,200,.45) 100%),radial-gradient(70% 90% at 90% 10%,rgba(190,140,255,.40),transparent 70%);
   --base-hero:linear-gradient(120deg,#5b3fc4,#2a1a72)}
 body[data-modo=normal]{--bg:#0b1a4a;--tx:#f1f5ff;--mu:#bfcaee;--pri:#cfdcff;--pri2:#081445;--deep:#14308f;
   --bgimg:radial-gradient(60% 40% at 90% 4%,rgba(80,130,255,.5),transparent 70%),radial-gradient(55% 35% at 4% 38%,rgba(30,80,220,.5),transparent 70%),radial-gradient(60% 40% at 96% 74%,rgba(60,170,230,.25),transparent 70%),linear-gradient(180deg,#14308f,#07123a 70%);
